@@ -18,13 +18,15 @@ targets:
     platform: iOS
     sources:
       - path: App
+    info:
+      properties:
+        UIFileSharingEnabled: true
+        LSSupportsOpeningDocumentsInPlace: true
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.tangidev.tangiextract
         PRODUCT_NAME: TangiExtract
         INFOPLIST_KEY_CFBundleDisplayName: TangiExtract
-        INFOPLIST_KEY_UIFileSharingEnabled: YES
-        INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace: YES
         GENERATE_INFOPLIST_FILE: YES
         LIBRARY_SEARCH_PATHS:
           - "$(inherited)"
