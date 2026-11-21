@@ -2,49 +2,58 @@
 
 **Everything inside. Nothing left behind.**
 
-TangiExtract is a standalone iOS file inspection and extraction application for archives, Windows installers, and game data.
+TangiExtract is a lightweight, on-device iOS extractor and file browser for supported installers, archives, and game data.
 
 ## Current development status
 
-- [x] Independent iOS application and Rust extraction core
 - [x] Native NSIS Windows installer extraction
-- [x] SwiftUI application shell and document-picker integration
-- [x] iOS ARM64 GitHub Actions build pipeline
-- [x] Automated NSIS fixture regression test
-- [ ] Harden the NSIS engine for general-purpose extraction (streaming, configurable limits, cancellation, and collision policy)
-- [ ] Add ZIP, 7Z, RAR, TAR, GZ, BZ2, and XZ archive support
-- [ ] Add file identification by signatures rather than extensions alone
-- [ ] Add archive inspection, history, batch jobs, and storage management
-- [ ] Add share-sheet import support
-- [ ] Add further installer formats, including Inno Setup and MSI
+- [x] Direct extraction from the selected source URL without keeping a duplicate copy
+- [x] Temporary job directories with cleanup after extraction
+- [x] Pastel SwiftUI home screen, My Files browser, and Settings
+- [x] Search, sort, Quick Look preview, share, rename, and delete for extracted files
+- [x] Appearance preference and post-extraction navigation setting
+- [x] Generated app icon and iOS ARM64 GitHub Actions build
+- [x] Automated NSIS extraction regression test
+- [ ] ZIP, 7Z, RAR, TAR, GZ, BZ2, and XZ support
+- [ ] File signature detection and archive preview
+- [ ] Batch extraction, persistent extraction history, progress, and cancellation
+- [ ] Additional installer formats, including Inno Setup and MSI
 
-**Format support:** A recognized file type is not necessarily an extractable file type. TangiExtract will report unsupported formats rather than claim universal executable or proprietary-format support. Windows installers are parsed as data; TangiExtract does not execute Windows programs.
+**Format support:** A recognized file type is not necessarily an extractable file type. Unsupported formats are reported instead of being treated as extractable. Windows installers are parsed as data; TangiExtract never executes Windows programs.
+
+## Storage behavior
+
+The selected source file is read directly from its original location using iOS file access permissions. TangiExtract does **not** copy it into an Imports folder or retain a second copy.
+
+Completed output is saved in:
+
+`Files → On My iPhone → TangiExtract → Extracted`
+
+A short-lived working directory is created in `Temporary` while extraction runs and is removed when the job finishes. The original source remains untouched.
 
 ## Latest development build
 
-An unsigned iOS ARM64 development IPA has been built and published successfully. The current implementation supports NSIS Windows installers only.
-
-- [Download the latest TangiExtract IPA](https://github.com/TangiDev69/TangiExtract/releases/latest)
+- [Download the latest unsigned development IPA](https://github.com/TangiDev69/TangiExtract/releases/latest)
 - [View GitHub Actions builds](https://github.com/TangiDev69/TangiExtract/actions)
 
-The IPA has passed automated Rust tests, an NSIS extraction regression test, iOS ARM64 compilation, Xcode build, and IPA packaging checks. Physical-device installation and runtime behavior still require testing.
+The current extraction backend supports NSIS installers only. Physical-device installation and runtime testing are separate from CI build checks.
 
 ## Architecture
 
-- **SwiftUI:** iOS application and user interface.
-- **Swift services:** document importing, storage coordination, and native-engine integration.
+- **SwiftUI:** user interface, file browser, document access, and settings.
+- **Swift services:** secure-scoped source access, temporary storage, and native-engine integration.
 - **Rust:** format-specific extraction engines and parsers.
-- **GitHub Actions:** reproducible unsigned iOS ARM64 IPA builds.
+- **GitHub Actions:** automated Rust tests, iOS ARM64 compilation, unsigned IPA packaging.
 
 ## Build
 
-GitHub Actions builds the iOS app on macOS. The workflow tests the Rust crate, compiles the Rust static library for `aarch64-apple-ios`, generates the Xcode project with XcodeGen, builds the app without code signing, and packages an IPA.
+GitHub Actions builds the app on macOS. The workflow tests the Rust crate, builds a generated NSIS fixture, compiles the Rust static library for `aarch64-apple-ios`, generates the app icon, creates the Xcode project with XcodeGen, builds without code signing, and packages an IPA.
 
-Unsigned IPA output is intended for compatible sideloading workflows. It is not an App Store-signed application. Import the IPA into a compatible signing/sideloading tool before installation if your chosen tool requires a signed package.
+Unsigned IPA output is intended for compatible sideloading workflows. It is not an App Store-signed application.
 
-## Security and current limitations
+## Security and limitations
 
-The initial NSIS implementation retains its upstream parser's existing memory use and file filtering behavior. It includes basic input/output, entry-count, path, and duplicate checks, but it is **not yet the final general-purpose security model**. Do not treat this early development build as a hardened arbitrary-file extraction utility.
+The current NSIS parser reads the installer and decompressed entries into memory. It applies basic input-size, expanded-size, entry-count, path, and duplicate checks, but is not yet a hardened universal extraction engine. Large or unusual installers may exceed device memory limits.
 
 ## License
 
