@@ -6,6 +6,7 @@ on:
     branches: [main]
     paths:
       - "App/**"
+      - "Scripts/**"
       - "Rust/**"
       - "project.yml"
       - ".github/workflows/build-ios.yml"
@@ -70,6 +71,9 @@ jobs:
 
       - name: Install XcodeGen
         run: brew install xcodegen
+
+      - name: Generate pastel app icon
+        run: swift Scripts/GenerateAppIcon.swift "$PWD/App/Assets.xcassets/AppIcon.appiconset/AppIcon.png"
 
       - name: Generate Xcode project
         run: xcodegen generate --spec project.yml
