@@ -84,6 +84,7 @@ enum ExtractionService {
             }
         }
         if let copyError {
+            try? fileManager.removeItem(at: stagedURL)
             throw ExtractionServiceError.extractionFailed("Could not read the selected file through the Files provider: \(copyError.localizedDescription)")
         }
         if let coordinationError {
@@ -154,7 +155,9 @@ enum ExtractionService {
                         } else if isTar || isTarCompressed {
                             return tangiextract_tar_extract(inputPath, outputPath, tarCompression, buffer.baseAddress!, buffer.count)
                         } else if fileExtension == "exe" {
-                            return tangiextract_nsis_extract(inputPath, outputPath, buffer.baseAddress!, buffer.count)
+                            let nsisStatus = tangiextract_nsis_extract(inputPath, outputPath, buffer.baseAddress!, buffer.count)
+                            if nsisStatus == 0 { return 0 }
+                            return tangiextract_extended_extract(inputPath, outputPath, buffer.baseAddress!, buffer.count)
                         } else {
                             return tangiextract_extended_extract(inputPath, outputPath, buffer.baseAddress!, buffer.count)
                         }
