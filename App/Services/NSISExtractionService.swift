@@ -16,9 +16,9 @@ enum ExtractionServiceError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .unsupportedFormat:
-            return "The first development build supports NSIS Windows installers (.exe) only."
+            return "This build currently extracts supported NSIS Windows installers (.exe)."
         case .cannotCreateStorage:
-            return "TangiExtract could not prepare its storage directories."
+            return "TangiExtract could not prepare its temporary extraction folder."
         case .extractionFailed(let detail):
             return detail
         }
@@ -26,6 +26,8 @@ enum ExtractionServiceError: LocalizedError {
 }
 
 enum NSISExtractionService {
+    /// Extracts directly from the selected file URL. The source file is never
+    /// copied into the app's storage; only extracted output is retained.
     static func extractInstaller(at sourceURL: URL) throws -> URL {
         let hasSecurityScope = sourceURL.startAccessingSecurityScopedResource()
         defer {
@@ -43,12 +45,9 @@ enum NSISExtractionService {
             throw ExtractionServiceError.cannotCreateStorage
         }
 
-        let imports = documents.appendingPathComponent("Imports", isDirectory: true)
         let extracted = documents.appendingPathComponent("Extracted", isDirectory: true)
         let temporary = documents.appendingPathComponent("Temporary", isDirectory: true)
-
         do {
-            try fileManager.createDirectory(at: imports, withIntermediateDirectories: true)
             try fileManager.createDirectory(at: extracted, withIntermediateDirectories: true)
             try fileManager.createDirectory(at: temporary, withIntermediateDirectories: true)
         } catch {
@@ -56,18 +55,14 @@ enum NSISExtractionService {
         }
 
         let jobDirectory = temporary.appendingPathComponent(UUID().uuidString, isDirectory: true)
-        let inputCopy = jobDirectory.appendingPathComponent(sourceURL.lastPathComponent)
         let outputDirectory = jobDirectory.appendingPathComponent("Output", isDirectory: true)
 
         do {
             try fileManager.createDirectory(at: jobDirectory, withIntermediateDirectories: true)
             defer { try? fileManager.removeItem(at: jobDirectory) }
 
-            // Copy into app-controlled temporary storage before invoking native code.
-            try fileManager.copyItem(at: sourceURL, to: inputCopy)
-
             var errorBuffer = [CChar](repeating: 0, count: 2048)
-            let status = inputCopy.path.withCString { inputPath in
+            let status = sourceURL.path.withCString { inputPath in
                 outputDirectory.path.withCString { outputPath in
                     errorBuffer.withUnsafeMutableBufferPointer { buffer in
                         tangiextract_nsis_extract(inputPath, outputPath, buffer.baseAddress!, buffer.count)
@@ -82,28 +77,17 @@ enum NSISExtractionService {
                 )
             }
 
-            let baseName = sourceURL.deletingPathExtension().lastPathComponent
-                .replacingOccurrences(of: "/", with: "_")
-                .replacingOccurrences(of: ":", with: "_")
-            let destination = extracted.appendingPathComponent(
-                "\(baseName.isEmpty ? "Installer" : baseName)-\(UUID().uuidString.prefix(8))",
-                isDirectory: true
-            )
+            let rawName = sourceURL.deletingPathExtension().lastPathComponent
+            let safeName = rawName
+                .components(separatedBy: CharacterSet(charactersIn: "/\\\\:"))
+                .filter { !$0.isEmpty && $0 != "." && $0 != ".." }
+                .joined(separator: "-")
+            let folderName = "\(safeName.isEmpty ? "Extracted files" : safeName)-\(UUID().uuidString.prefix(6))"
+            let destination = extracted.appendingPathComponent(folderName, isDirectory: true)
 
-            // Preserve the original installer in Documents/Imports.
-            let importedCopy = imports.appendingPathComponent(
-                "\(baseName.isEmpty ? "Installer" : baseName)-\(UUID().uuidString.prefix(8)).exe"
-            )
-            try fileManager.copyItem(at: inputCopy, to: importedCopy)
-
-            // The native engine writes only into a unique temporary directory.
-            // Publish the completed result with a same-volume directory move.
-            do {
-                try fileManager.moveItem(at: outputDirectory, to: destination)
-            } catch {
-                try? fileManager.removeItem(at: importedCopy)
-                throw error
-            }
+            // Publish only a fully extracted result. Failed jobs remain temporary
+            // and are removed by the defer above.
+            try fileManager.moveItem(at: outputDirectory, to: destination)
             return destination
         } catch let error as ExtractionServiceError {
             throw error
