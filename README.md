@@ -12,7 +12,7 @@ The project is being built incrementally. Its first native extraction backend is
 - [x] Rust NSIS extraction code migrated as the initial compatibility baseline
 - [x] SwiftUI application shell and document-picker integration
 - [x] iOS ARM64 GitHub Actions build pipeline
-- [ ] Reproduce the historical AssaultCube 1.3.0.2 extraction result in this repository's CI
+- [x] Add a CI regression step for the historical AssaultCube 1.3.0.2 installer (execution pending)
 - [ ] Harden the NSIS engine for general-purpose extraction (streaming, configurable limits, cancellation, and collision policy)
 - [ ] Add ZIP/TAR and broader archive support
 - [ ] Add format identification by file signatures
