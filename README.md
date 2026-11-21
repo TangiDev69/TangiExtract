@@ -43,7 +43,7 @@ A short-lived working directory is created in the app's temporary cache area whi
 - [Download the latest unsigned development IPA](https://github.com/TangiDev69/TangiExtract/releases/latest)
 - [View GitHub Actions builds](https://github.com/TangiDev69/TangiExtract/actions)
 
-**Current compatibility:** `.zip`, `.7z`, `.tar`, `.tar.gz` / `.tgz`, `.gz`, `.bz2`, and `.xz` archives and selected Windows `.exe` files that are valid NSIS installers. `.exe` is a generic executable container, not a single archive format; only NSIS-compatible installers are supported at present. RAR archives, ordinary applications, Inno Setup installers, MSI packages, and arbitrary EXE files are not currently supported. TangiExtract parses supported installers as data and never launches them. Physical-device installation and runtime testing are separate from CI build checks.
+**Current compatibility:** `.zip`, `.7z`, `.tar`, `.tar.gz` / `.tgz`, `.tar.bz2` / `.tbz2`, `.tar.xz` / `.txz`, `.tar.zst`, `.tar.lz4`, standalone `.gz`, `.bz2`, `.xz`, `.zst`, and `.lz4` archives and selected Windows `.exe` files that are valid NSIS installers. `.exe` is a generic executable container, not a single archive format; only NSIS-compatible installers are supported at present. RAR archives, ordinary applications, Inno Setup installers, MSI packages, and arbitrary EXE files are not currently supported. TangiExtract parses supported installers as data and never launches them. Physical-device installation and runtime testing are separate from CI build checks.
 
 ## Architecture
 
