@@ -21,6 +21,15 @@ The project is being built incrementally. Its first native extraction backend is
 
 **Important:** A recognized file type is not necessarily an extractable file type. TangiExtract will report unsupported formats rather than claim universal executable or proprietary-format support.
 
+## Latest development build
+
+The first unsigned iOS ARM64 development IPA was built and published successfully on 2026-11-21. It currently supports NSIS Windows installers only.
+
+- [Download TangiExtract IPA](https://github.com/TangiDev69/TangiExtract/releases/download/tangiextract-build-13-1/TangiExtract.ipa)
+- [Build and test logs](https://github.com/TangiDev69/TangiExtract/actions/runs/44858872377)
+
+The IPA has passed automated build and packaging checks. Physical-device installation and runtime behavior still require testing.
+
 ## Architecture
 
 - **SwiftUI:** iOS application and user interface.
