@@ -103,7 +103,7 @@ jobs:
           with path.open("rb") as stream:
               info = plistlib.load(stream)
           info["CFBundleDisplayName"] = "TangiExtract"
-          info["CFBundleShortVersionString"] = "1.1.0"
+          info["CFBundleShortVersionString"] = "1.2.0"
           info["CFBundleVersion"] = os.environ.get("GITHUB_RUN_NUMBER", "1")
           info["CFBundleName"] = "TangiExtract"
           info["UIFileSharingEnabled"] = True
@@ -146,6 +146,6 @@ jobs:
           generate_release_notes: false
           body: |
             Automated unsigned development IPA.
-            Current formats: ZIP, TAR, TAR.GZ / TGZ archives and NSIS-compatible Windows EXE installers. Other EXE installer families and archive formats are not yet supported.
+            Current formats: ZIP, 7Z, TAR, TAR.GZ / TGZ, standalone GZ, BZ2, XZ archives and NSIS-compatible Windows EXE installers. RAR and other Windows installer families are not yet supported.
             It is not a production release.
           files: TangiExtract.ipa
