@@ -90,9 +90,9 @@ enum ExtractionService {
                 outputDirectory.path.withCString { outputPath in
                     errorBuffer.withUnsafeMutableBufferPointer { buffer in
                         if fileExtension == "zip" {
-                            tangiextract_zip_extract(inputPath, outputPath, buffer.baseAddress!, buffer.count)
+                            return tangiextract_zip_extract(inputPath, outputPath, buffer.baseAddress!, buffer.count)
                         } else if is7z {
-                            tangiextract_7z_extract(inputPath, outputPath, buffer.baseAddress!, buffer.count)
+                            return tangiextract_7z_extract(inputPath, outputPath, buffer.baseAddress!, buffer.count)
                         } else if streamKind != 0 && !isTarGzip {
                             let outputFileName = sourceURL.deletingPathExtension().lastPathComponent
                             let outputFile = outputDirectory.appendingPathComponent(outputFileName)
@@ -100,9 +100,9 @@ enum ExtractionService {
                                 tangiextract_stream_extract(inputPath, outputPath, streamKind, buffer.baseAddress!, buffer.count)
                             }
                         } else if isTar || isTarGzip {
-                            tangiextract_tar_extract(inputPath, outputPath, isTarGzip ? 1 : 0, buffer.baseAddress!, buffer.count)
+                            return tangiextract_tar_extract(inputPath, outputPath, isTarGzip ? 1 : 0, buffer.baseAddress!, buffer.count)
                         } else {
-                            tangiextract_nsis_extract(inputPath, outputPath, buffer.baseAddress!, buffer.count)
+                            return tangiextract_nsis_extract(inputPath, outputPath, buffer.baseAddress!, buffer.count)
                         }
                     }
                 }
