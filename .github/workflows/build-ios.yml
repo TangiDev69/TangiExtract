@@ -146,6 +146,6 @@ jobs:
           generate_release_notes: false
           body: |
             Automated unsigned development IPA.
-            Current formats: ZIP, 7Z, TAR, TAR.GZ / TGZ, standalone GZ, BZ2, XZ archives and NSIS-compatible Windows EXE installers. RAR and other Windows installer families are not yet supported.
+            Current formats: ZIP, 7Z, TAR, TAR.GZ / TGZ, TAR.BZ2 / TBZ2, TAR.XZ / TXZ, TAR.ZST, TAR.LZ4, standalone GZ, BZ2, XZ, ZST, LZ4 archives and NSIS-compatible Windows EXE installers. Only EXE extraction has been user-tested on-device; all other formats remain untested. RAR and other Windows installer families are not yet supported.
             It is not a production release.
           files: TangiExtract.ipa
