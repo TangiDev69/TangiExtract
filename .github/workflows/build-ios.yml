@@ -44,12 +44,12 @@ jobs:
           set -euo pipefail
           brew install nsis
           mkdir -p /tmp/tangiextract-nsis-fixture
-          printf 'TANGIEXTRACT_NSIS_FIXTURE_V1\\n' > /tmp/tangiextract-nsis-fixture/payload.txt
+          printf 'TANGIEXTRACT_NSIS_FIXTURE_V1\n' > /tmp/tangiextract-nsis-fixture/payload.txt
           cat > /tmp/tangiextract-nsis-fixture/fixture.nsi <<'NSIS'
           OutFile "/tmp/tangiextract-nsis-fixture/fixture.exe"
-          InstallDir "$TEMP\\TangiExtractFixture"
+          InstallDir "$TEMP\TangiExtractFixture"
           Section
-            SetOutPath "$INSTDIR\\payload"
+            SetOutPath "$INSTDIR\payload"
             File /oname=fixture.txt "/tmp/tangiextract-nsis-fixture/payload.txt"
           SectionEnd
           NSIS
