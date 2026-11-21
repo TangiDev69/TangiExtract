@@ -1,7 +1,4 @@
-// Migrated from TangiDev69/Assaultcube-iOS-port:
-// ios/NSISExtractor/src/lib.rs
-//
-// This is a compatibility baseline, not yet the final general-purpose NSIS
+This is a compatibility baseline, not yet the final general-purpose NSIS
 // extraction API. In particular, the upstream implementation reads the input
 // and each decompressed entry into memory and applies its original file-type
 // filtering. Those behaviors are intentionally preserved for the first
@@ -104,7 +101,7 @@ pub fn extract_installer(input: &Path, output: &Path) -> Result<(), String> {
 }
 
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn ac_nsis_extract(
+pub unsafe extern "C" fn tangiextract_nsis_extract(
     input_path: *const c_char,
     output_path: *const c_char,
     error_buffer: *mut c_char,
@@ -140,7 +137,7 @@ mod tests {
     fn rejects_null_ffi_paths() {
         let mut error = [0i8; 128];
         let result = unsafe {
-            ac_nsis_extract(std::ptr::null(), std::ptr::null(), error.as_mut_ptr(), error.len())
+            tangiextract_nsis_extract(std::ptr::null(), std::ptr::null(), error.as_mut_ptr(), error.len())
         };
         assert_eq!(result, 1);
         assert!(!error.iter().all(|byte| *byte == 0));
