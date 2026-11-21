@@ -18,3 +18,6 @@ flate2 = { version = "1", default-features = false, features = ["rust_backend"] 
 sevenz-rust2 = { version = "0.25", default-features = true }
 bzip2 = "0.5"
 xz2 = "0.1"
+
+zstd = "0.13"
+lz4_flex = { version = "0.11", features = ["frame"] }
