@@ -5,7 +5,6 @@
 
 use nsis::NsisInstaller;
 use std::{
-    collections::HashSet,
     ffi::{CStr, c_char},
     fs,
     path::{Component, Path},
@@ -38,7 +37,6 @@ pub fn extract_installer(input: &Path, output: &Path) -> Result<(), String> {
         .map_err(|e| format!("Not a supported NSIS installer: {e}"))?;
     fs::create_dir_all(output).map_err(|e| format!("Cannot create extraction folder: {e}"))?;
 
-    let mut seen = HashSet::new();
     let mut total = 0u64;
     let mut count = 0usize;
     for item in installer.files() {
@@ -63,11 +61,8 @@ pub fn extract_installer(input: &Path, output: &Path) -> Result<(), String> {
         {
             return Err(format!("Unsafe installer path rejected: {relative}"));
         }
-        // Extract payload files regardless of extension. Files are written as data only;
-        // TangiExtract never executes EXE, DLL, script, or installer contents.
-        if !seen.insert(rel_path.to_path_buf()) {
-            return Err(format!("Duplicate installer destination rejected: {relative}"));
-        }
+        // Repeated NSIS destinations are valid. Later section writes replace earlier files,
+        // matching the installer's normal overwrite semantics. Payloads are never executed.
         let data = file
             .decompress()
             .map_err(|e| format!("Cannot decompress {relative}: {e}"))?;
