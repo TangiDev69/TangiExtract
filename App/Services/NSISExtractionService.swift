@@ -46,7 +46,8 @@ enum NSISExtractionService {
         }
 
         let extracted = documents.appendingPathComponent("Extracted", isDirectory: true)
-        let temporary = documents.appendingPathComponent("Temporary", isDirectory: true)
+        let temporary = fileManager.temporaryDirectory
+            .appendingPathComponent("TangiExtract", isDirectory: true)
         do {
             try fileManager.createDirectory(at: extracted, withIntermediateDirectories: true)
             try fileManager.createDirectory(at: temporary, withIntermediateDirectories: true)
