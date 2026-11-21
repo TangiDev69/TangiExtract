@@ -122,7 +122,7 @@ struct ContentView: View {
 
             HStack(alignment: .top, spacing: 12) {
                 Image(systemName: extractedLocation == nil ? "clock" : "checkmark.circle.fill")
-                    .foregroundStyle(extractedLocation == nil ? .secondary : .green)
+                    .foregroundStyle(extractedLocation == nil ? Color.secondary : Color.green)
                 VStack(alignment: .leading, spacing: 4) {
                     Text(extractedLocation == nil ? "Ready when you are" : "Extraction completed")
                         .font(.subheadline.weight(.semibold))
