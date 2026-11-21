@@ -23,7 +23,7 @@ TangiExtract is a lightweight, on-device iOS extractor and file browser for supp
 
 ## Storage behavior
 
-The selected source file is read directly from its original location using iOS file access permissions. TangiExtract does **not** copy it into an Imports folder or retain a second copy.
+The selected source file is read directly from its original location using iOS file access permissions. TangiExtract does **not** copy it into its own storage or retain a second copy.
 
 Completed output is saved in:
 
