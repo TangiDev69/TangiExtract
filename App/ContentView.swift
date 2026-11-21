@@ -369,12 +369,7 @@ private struct HowItWorksSheet: View {
         .padding(24)
         .padding(.top, 10)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            LinearGradient(colors: [Color(red: 0.98, green: 0.95, blue: 1),
-                                    Color(red: 1, green: 0.95, blue: 0.97)],
-                           startPoint: .topLeading, endPoint: .bottomTrailing)
-                .ignoresSafeArea()
-        )
+        .background(Color(uiColor: .systemBackground).ignoresSafeArea())
     }
 }
 
