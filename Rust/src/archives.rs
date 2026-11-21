@@ -338,3 +338,136 @@ pub unsafe extern "C" fn tangiextract_stream_extract(input: *const c_char, outpu
         Err(e) => { write_error(error, cap, &e); 1 }
     }
 }
+
+
+/// Extended format engine for archive, disk-image, document and installer
+/// containers not handled by the dedicated, already-tested extraction paths.
+pub fn extract_extended(input: &Path, output: &Path) -> Result<(), String> {
+    use exav_unpack::{detect, walk, Budget, Limits, Member};
+    use exav_unpack::source::BlockCache;
+
+    let meta = fs::metadata(input).map_err(|e| format!("Cannot read input: {e}"))?;
+    if meta.len() == 0 || meta.len() > MAX_INPUT {
+        return Err("Input is empty or exceeds the 1 GB input limit.".into());
+    }
+    let source = BlockCache::new(File::open(input).map_err(|e| format!("Cannot open input: {e}"))?)
+        .map_err(|e| format!("Cannot prepare archive reader: {e}"))?;
+    let format = detect(&source).ok_or_else(|| "This file type is not recognised by the extended extraction engine.".to_string())?;
+
+    let mut limits = Limits::default();
+    limits.max_extracted_bytes = 512 * 1024 * 1024;
+    limits.max_buffer_bytes = 128 * 1024 * 1024;
+    limits.max_members = 50_000;
+    limits.max_recursion = 8;
+    let mut budget = Budget::new(limits);
+    fs::create_dir_all(output).map_err(|e| format!("Cannot create output folder: {e}"))?;
+
+    let mut seen = HashSet::new();
+    let mut extracted = 0usize;
+    let mut failure: Option<String> = None;
+
+    let result = walk::<()>(format, &source, &mut budget, &mut |member, content, _budget| {
+        if let Some(reason) = member.unsupported {
+            failure = Some(format!("{} was recognised but could not be fully decoded: {reason}", member.name));
+            return Some(());
+        }
+
+        let is_directory = member.name.ends_with('/')
+            || member.mode.is_some_and(|mode| mode & 0o170000 == 0o040000);
+        let trimmed_name = member.name.trim_end_matches('/');
+        if trimmed_name.is_empty() {
+            return None;
+        }
+        let relative = match safe_relative(trimmed_name, "extended archive") {
+            Ok(path) => path,
+            Err(error) => { failure = Some(error); return Some(()); }
+        };
+        if member.link.is_some()
+            || member.mode.is_some_and(|mode| mode & 0o170000 == 0o120000)
+        {
+            failure = Some(format!("Symbolic links are not extracted: {}", member.name));
+            return Some(());
+        }
+        if !seen.insert(relative.clone()) {
+            failure = Some(format!("Duplicate extraction destination rejected: {}", relative.display()));
+            return Some(());
+        }
+        let destination = output.join(&relative);
+
+        if is_directory {
+            if let Err(error) = fs::create_dir_all(&destination) {
+                failure = Some(format!("Cannot create folder {}: {error}", relative.display()));
+                return Some(());
+            }
+            return None;
+        }
+
+        let Some(content) = content else {
+            // Some structured formats expose metadata without a file payload.
+            return None;
+        };
+        if let Some(parent) = destination.parent() {
+            if let Err(error) = fs::create_dir_all(parent) {
+                failure = Some(format!("Cannot create folder: {error}"));
+                return Some(());
+            }
+        }
+        let mut file = match File::create(&destination) {
+            Ok(file) => file,
+            Err(error) => {
+                failure = Some(format!("Cannot create {}: {error}", relative.display()));
+                return Some(());
+            }
+        };
+        let copied = match content {
+            Member::Bytes(bytes) => {
+                if let Err(error) = io::Write::write_all(&mut file, &bytes) {
+                    failure = Some(format!("Cannot write {}: {error}", relative.display()));
+                    return Some(());
+                }
+                bytes.len() as u64
+            }
+            Member::Stream(reader) => match io::copy(reader, &mut file) {
+                Ok(size) => size,
+                Err(error) => {
+                    failure = Some(format!("Cannot extract {}: {error}", relative.display()));
+                    return Some(());
+                }
+            },
+        };
+        if copied == 0 {
+            let _ = fs::remove_file(&destination);
+            return None;
+        }
+        extracted += 1;
+        None
+    });
+
+    if let Some(error) = failure {
+        return Err(error);
+    }
+    result.map_err(|e| format!("Extended extraction stopped: {e}"))?;
+    if extracted == 0 {
+        return Err("The format was recognised, but no extractable file contents were found.".into());
+    }
+    Ok(())
+}
+
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn tangiextract_extended_extract(
+    input: *const c_char,
+    output: *const c_char,
+    error: *mut c_char,
+    cap: usize,
+) -> i32 {
+    if input.is_null() || output.is_null() {
+        write_error(error, cap, "Invalid input or output path.");
+        return 1;
+    }
+    let input = unsafe { CStr::from_ptr(input) }.to_string_lossy();
+    let output = unsafe { CStr::from_ptr(output) }.to_string_lossy();
+    match extract_extended(Path::new(input.as_ref()), Path::new(output.as_ref())) {
+        Ok(()) => 0,
+        Err(message) => { write_error(error, cap, &message); 1 }
+    }
+}
