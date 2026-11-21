@@ -104,7 +104,7 @@ enum ExtractionService {
                             return outputFile.path.withCString { outputPath in
                                 tangiextract_stream_extract(inputPath, outputPath, streamKind, buffer.baseAddress!, buffer.count)
                             }
-                        } else if isTar || isTarGzip {
+                        } else if isTar || isTarCompressed {
                             return tangiextract_tar_extract(inputPath, outputPath, tarCompression, buffer.baseAddress!, buffer.count)
                         } else {
                             return tangiextract_nsis_extract(inputPath, outputPath, buffer.baseAddress!, buffer.count)
