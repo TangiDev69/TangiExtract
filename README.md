@@ -32,10 +32,10 @@ TangiExtract is a lightweight, on-device iOS archive and installer extractor wit
 | Zstandard | `.zst` | Implemented |
 | LZ4 | `.lz4` | Implemented |
 | NSIS installers | compatible `.exe` | Implemented |
-| RAR | `.rar` | Planned / under investigation |
+| RAR | `.rar` | Implemented (single-volume, unencrypted) |
 | Other installer formats | MSI, Inno Setup, etc. | Planned |
 
-**Device testing:** NSIS-compatible EXE extraction has been confirmed working on the developer's device. Other currently implemented formats have not yet been individually verified on a physical device. CI/build checks do not replace device testing.
+**Device testing:** NSIS-compatible EXE extraction has been confirmed working on the developer's device. RAR support has been added to the code and CI build, but it has not yet been tested on a physical device. Other formats also remain unverified on-device. CI/build checks do not replace device testing.
 
 A file extension alone does not guarantee support. EXE is a generic executable container; only supported NSIS installer files are handled. Unsupported or malformed files should return an error instead of being launched.
 
@@ -61,7 +61,7 @@ The IPA is unsigned and is intended for compatible sideloading tools such as Sid
 
 ## Project status and roadmap
 
-The project is actively developed. Current priorities are expanding archive-format coverage (starting with RAR), improving import/share workflows, and adding stronger automated fixtures for format-level regression tests. Additional potential formats include CAB, CPIO, AR, ISO/IMG, and more installer families; these will only be listed as supported after implementation and testing.
+The project is actively developed. Current priorities are validating RAR on-device, improving import/share workflows, adding automated fixtures for more archive formats, and expanding archive-format coverage. Potential next formats include CAB, CPIO, AR, ISO/IMG, and more installer families; they will only be listed as supported after implementation and testing. Additional potential formats include CAB, CPIO, AR, ISO/IMG, and more installer families; these will only be listed as supported after implementation and testing.
 
 ## Architecture
 
@@ -72,7 +72,7 @@ The project is actively developed. Current priorities are expanding archive-form
 
 ## Security notes
 
-Extraction is subject to resource limits and path validation. ZIP extraction rejects unsafe paths and symbolic links; TAR extraction rejects unsafe paths, links, and special entries. RAR and additional formats are not supported yet. This project is still evolving and should not be treated as a hardened universal archive-extraction suite. Be cautious with untrusted archives.
+Extraction is subject to resource limits and path validation. ZIP extraction rejects unsafe paths and symbolic links; TAR extraction rejects unsafe paths, links, and special entries. RAR extraction is currently limited to single-volume, unencrypted archives; password-protected and multipart archives are not supported in the app yet. Additional formats such as CAB, CPIO, AR, ISO/IMG, and more installer families remain under consideration. This project is still evolving and should not be treated as a hardened universal archive-extraction suite. Be cautious with untrusted archives.
 
 ## License and third-party notices
 
