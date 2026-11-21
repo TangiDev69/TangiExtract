@@ -274,18 +274,22 @@ private struct HomeView: View {
                 HStack(spacing: 8) {
                     formatChip("ZIP", name: "Archive", active: true)
                     formatChip("7Z", name: "7-Zip", active: true)
+                    formatChip("RAR", name: "RAR", active: true)
+                    formatChip("CAB", name: "Cabinet", active: true)
+                }
+                HStack(spacing: 8) {
                     formatChip("TAR", name: "Archive", active: true)
                     formatChip("TGZ", name: "TAR + Gzip", active: true)
-                }
-                HStack(spacing: 8) {
                     formatChip("TBZ2", name: "TAR + Bzip2", active: true)
                     formatChip("TXZ", name: "TAR + XZ", active: true)
-                    formatChip("TZST", name: "TAR + Zstd", active: true)
-                    formatChip("TLZ4", name: "TAR + LZ4", active: true)
                 }
                 HStack(spacing: 8) {
+                    formatChip("TZST", name: "TAR + Zstd", active: true)
+                    formatChip("TLZ4", name: "TAR + LZ4", active: true)
                     formatChip("GZ", name: "Gzip", active: true)
                     formatChip("BZ2", name: "Bzip2", active: true)
+                }
+                HStack(spacing: 8) {
                     formatChip("XZ", name: "XZ", active: true)
                     formatChip("ZST", name: "Zstandard", active: true)
                     formatChip("LZ4", name: "LZ4", active: true)
@@ -764,7 +768,7 @@ private struct SettingsView: View {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text("TangiExtract")
                                     .font(.system(size: 17, weight: .bold, design: .rounded))
-                                Text("Everything inside. Nothing left behind.")
+                                Text("Archive and installer extraction for iOS.")
                                     .font(.system(size: 11, weight: .medium, design: .rounded))
                                     .foregroundStyle(.secondary)
                             }
