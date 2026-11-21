@@ -19,15 +19,13 @@ targets:
     sources:
       - path: App
     info:
-      properties:
-        UIFileSharingEnabled: true
-        LSSupportsOpeningDocumentsInPlace: true
+      path: App/Info.plist
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.tangidev.tangiextract
         PRODUCT_NAME: TangiExtract
         INFOPLIST_KEY_CFBundleDisplayName: TangiExtract
-        GENERATE_INFOPLIST_FILE: YES
+        GENERATE_INFOPLIST_FILE: NO
         LIBRARY_SEARCH_PATHS:
           - "$(inherited)"
           - "$(SRCROOT)/Rust/target/aarch64-apple-ios/release"
