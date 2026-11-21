@@ -146,7 +146,9 @@ jobs:
           generate_release_notes: false
           body: |
             Automated unsigned iOS IPA release from the main branch.
-            Implemented formats: ZIP, 7Z, single-volume unencrypted RAR, CAB, TAR, TAR.GZ / TGZ, TAR.BZ2 / TBZ2, TAR.XZ / TXZ, TAR.ZST, TAR.LZ4, standalone GZ, BZ2, XZ, ZST, LZ4, and supported NSIS-compatible EXE installers.
-            Only EXE extraction has been confirmed on-device by the developer. Other formats remain unverified on-device. RAR and CAB support are included, but have not yet been tested on a physical device. Password-protected and multipart RAR archives and CAB cabinet sets spanning multiple files are not supported.
+            Common formats: ZIP, 7Z, single-volume unencrypted RAR, CAB, TAR, TAR.GZ / TGZ, TAR.BZ2 / TBZ2, TAR.XZ / TXZ, TAR.ZST, TAR.LZ4, standalone GZ, BZ2, XZ, ZST, LZ4, and supported NSIS-compatible EXE installers.
+            Extended engine: additional archive, disk-image, filesystem, document-container and installer-container readers, including ARJ, LHA/LZH, ARC, ZOO, ALZ, EGG, AR, CPIO, XAR, RPM, ISO/UDF, DMG, VHD/VHDX, QCOW2, VMDK, WIM, FAT/exFAT/NTFS/ext, SquashFS, CHM, OLE/MSI, PDF embedded streams, email/MIME, RTF, OneNote and related formats. Format-specific decoding limitations apply; some formats expose embedded contents rather than a normal file tree.
+            Confirmed on the developer's device: ZIP, 7Z, RAR, TAR, TAR.GZ and standalone GZ. NSIS-compatible EXE extraction was confirmed in earlier testing. CAB and the newly added extended formats have not yet been device-tested. Password-protected and multipart RAR archives and CAB cabinet sets spanning multiple files are not supported by the dedicated legacy paths.
+            Files-picker access now uses coordinated reads and a temporary local working copy, which is removed after extraction. The source file remains unchanged.
             This is an unsigned sideloadable build, not an App Store release. The GitHub release is marked as the latest release for easier discovery.
           files: TangiExtract.ipa
