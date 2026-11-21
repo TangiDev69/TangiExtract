@@ -28,7 +28,7 @@ struct ContentView: View {
 
     var body: some View {
         TabView(selection: $selectedTab) {
-            HomeView {
+            HomeView(onOpenFiles: { selectedTab = 1 }) {
                 if openFilesAfterExtraction { selectedTab = 1 }
             }
             .tabItem { Label("Home", systemImage: "house.fill") }
@@ -48,6 +48,7 @@ struct ContentView: View {
 }
 
 private struct HomeView: View {
+    let onOpenFiles: () -> Void
     let onExtractionCompleted: () -> Void
     @State private var showingFilePicker = false
     @State private var isExtracting = false
@@ -204,7 +205,7 @@ for all your files.")
         HStack(spacing: 12) {
             quickAction("Browse files", subtitle: "Your extracted folders", icon: "folder.fill",
                         tint: TangiPalette.lavender) {
-                onExtractionCompleted()
+                onOpenFiles()
             }
             quickAction("How it works", subtitle: "Safe & on-device", icon: "heart.text.square.fill",
                         tint: Color(red: 0.91, green: 0.55, blue: 0.69)) {
