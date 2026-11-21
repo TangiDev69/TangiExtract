@@ -33,3 +33,4 @@ targets:
         OTHER_LDFLAGS:
           - "$(inherited)"
           - "-ltangiextract"
+          - "-lc++"
