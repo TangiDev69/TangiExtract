@@ -33,7 +33,7 @@ enum ExtractionServiceError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .unsupportedFormat:
-            return "Supported formats are ZIP, 7Z, TAR, TAR.GZ, TGZ, GZ, BZ2, XZ archives and NSIS-based Windows installers (.exe)."
+            return "Supported formats are ZIP, 7Z, TAR, TAR.GZ/TGZ, TAR.BZ2/TBZ2, TAR.XZ/TXZ, TAR.ZST, TAR.LZ4, GZ, BZ2, XZ, ZST, LZ4 archives and NSIS-based Windows installers (.exe)."
         case .cannotCreateStorage:
             return "TangiExtract could not prepare its temporary extraction folder."
         case .extractionFailed(let detail):
@@ -55,11 +55,16 @@ enum ExtractionService {
 
         let fileExtension = sourceURL.pathExtension.lowercased()
         let lowerName = sourceURL.lastPathComponent.lowercased()
-        let isTarGzip = lowerName.hasSuffix(".tar.gz") || fileExtension == "tgz"
+        let tarCompression: Int32 = lowerName.hasSuffix(".tar.gz") || fileExtension == "tgz" ? 1 :
+            (lowerName.hasSuffix(".tar.bz2") || fileExtension == "tbz2" ? 2 :
+            (lowerName.hasSuffix(".tar.xz") || fileExtension == "txz" ? 3 :
+            (lowerName.hasSuffix(".tar.zst") ? 4 : (lowerName.hasSuffix(".tar.lz4") ? 5 : 0))))
+        let isTarCompressed = tarCompression != 0
         let isTar = fileExtension == "tar"
         let is7z = fileExtension == "7z"
-        let streamKind: Int32 = fileExtension == "gz" ? 1 : (fileExtension == "bz2" ? 2 : (fileExtension == "xz" ? 3 : 0))
-        guard fileExtension == "exe" || fileExtension == "zip" || isTarGzip || isTar || is7z || streamKind != 0 else {
+        let streamKind: Int32 = fileExtension == "gz" ? 1 : (fileExtension == "bz2" ? 2 :
+            (fileExtension == "xz" ? 3 : (fileExtension == "zst" ? 4 : (fileExtension == "lz4" ? 5 : 0))))
+        guard fileExtension == "exe" || fileExtension == "zip" || isTarCompressed || isTar || is7z || streamKind != 0 else {
             throw ExtractionServiceError.unsupportedFormat
         }
 
@@ -93,14 +98,14 @@ enum ExtractionService {
                             return tangiextract_zip_extract(inputPath, outputPath, buffer.baseAddress!, buffer.count)
                         } else if is7z {
                             return tangiextract_7z_extract(inputPath, outputPath, buffer.baseAddress!, buffer.count)
-                        } else if streamKind != 0 && !isTarGzip {
+                        } else if streamKind != 0 && !isTarCompressed {
                             let outputFileName = sourceURL.deletingPathExtension().lastPathComponent
                             let outputFile = outputDirectory.appendingPathComponent(outputFileName)
                             return outputFile.path.withCString { outputPath in
                                 tangiextract_stream_extract(inputPath, outputPath, streamKind, buffer.baseAddress!, buffer.count)
                             }
                         } else if isTar || isTarGzip {
-                            return tangiextract_tar_extract(inputPath, outputPath, isTarGzip ? 1 : 0, buffer.baseAddress!, buffer.count)
+                            return tangiextract_tar_extract(inputPath, outputPath, tarCompression, buffer.baseAddress!, buffer.count)
                         } else {
                             return tangiextract_nsis_extract(inputPath, outputPath, buffer.baseAddress!, buffer.count)
                         }
