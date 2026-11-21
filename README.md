@@ -29,7 +29,7 @@ Completed output is saved in:
 
 `Files → On My iPhone → TangiExtract → Extracted`
 
-A short-lived working directory is created in `Temporary` while extraction runs and is removed when the job finishes. The original source remains untouched.
+A short-lived working directory is created in the app's temporary cache area while extraction runs and is removed when the job finishes. It is not exposed in the Files app. The original source remains untouched.
 
 ## Latest development build
 
