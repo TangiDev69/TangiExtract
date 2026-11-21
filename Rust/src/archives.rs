@@ -81,16 +81,24 @@ fn extract_tar_reader<R: Read>(reader: R, output: &Path) -> Result<(), String> {
     Ok(())
 }
 
-pub fn extract_tar(input: &Path, output: &Path, gzip: bool) -> Result<(), String> {
+pub fn extract_tar(input: &Path, output: &Path, compression: i32) -> Result<(), String> {
     let meta = fs::metadata(input).map_err(|e| format!("Cannot read archive: {e}"))?;
     if meta.len() == 0 || meta.len() > MAX_INPUT { return Err("Archive is empty or exceeds the 1 GB input limit.".into()); }
     let file = File::open(input).map_err(|e| format!("Cannot open archive: {e}"))?;
-    if gzip { extract_tar_reader(flate2::read::GzDecoder::new(file), output) }
-    else { extract_tar_reader(file, output) }
+    let reader: Box<dyn Read> = match compression {
+        0 => Box::new(file),
+        1 => Box::new(flate2::read::GzDecoder::new(file)),
+        2 => Box::new(bzip2::read::BzDecoder::new(file)),
+        3 => Box::new(xz2::read::XzDecoder::new(file)),
+        4 => Box::new(zstd::stream::Decoder::new(file).map_err(|e| format!("Invalid Zstandard stream: {e}"))?),
+        5 => Box::new(lz4_flex::frame::FrameDecoder::new(file)),
+        _ => return Err("Unknown TAR compression type.".into()),
+    };
+    extract_tar_reader(reader, output)
 }
 
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn tangiextract_tar_extract(input: *const c_char, output: *const c_char, gzip: i32, error: *mut c_char, cap: usize) -> i32 {
+pub unsafe extern "C" fn tangiextract_tar_extract(input: *const c_char, output: *const c_char, compression: i32, error: *mut c_char, cap: usize) -> i32 {
     if input.is_null() || output.is_null() { write_error(error, cap, "Invalid input or output path."); return 1; }
     let i = unsafe { CStr::from_ptr(input) }.to_string_lossy();
     let o = unsafe { CStr::from_ptr(output) }.to_string_lossy();
@@ -162,6 +170,8 @@ pub fn extract_stream(input: &Path, output: &Path, kind: i32) -> Result<(), Stri
         1 => Box::new(flate2::read::GzDecoder::new(file)),
         2 => Box::new(bzip2::read::BzDecoder::new(file)),
         3 => Box::new(xz2::read::XzDecoder::new(file)),
+        4 => Box::new(zstd::stream::Decoder::new(file).map_err(|e| format!("Invalid Zstandard stream: {e}"))?),
+        5 => Box::new(lz4_flex::frame::FrameDecoder::new(file)),
         _ => return Err("Unknown compression stream type.".into()),
     };
     if let Some(parent) = output.parent() {
