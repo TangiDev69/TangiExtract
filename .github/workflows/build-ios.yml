@@ -10,7 +10,6 @@ on:
       - "project.yml"
       - ".github/workflows/build-ios.yml"
       - ".gitignore"
-      - "README.md"
 
 permissions:
   contents: write
