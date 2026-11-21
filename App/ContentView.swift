@@ -275,13 +275,21 @@ private struct HomeView: View {
                     formatChip("ZIP", name: "Archive", active: true)
                     formatChip("7Z", name: "7-Zip", active: true)
                     formatChip("TAR", name: "Archive", active: true)
-                    formatChip("TGZ", name: "Gzip TAR", active: true)
+                    formatChip("TGZ", name: "TAR + Gzip", active: true)
+                }
+                HStack(spacing: 8) {
+                    formatChip("TBZ2", name: "TAR + Bzip2", active: true)
+                    formatChip("TXZ", name: "TAR + XZ", active: true)
+                    formatChip("TZST", name: "TAR + Zstd", active: true)
+                    formatChip("TLZ4", name: "TAR + LZ4", active: true)
                 }
                 HStack(spacing: 8) {
                     formatChip("GZ", name: "Gzip", active: true)
                     formatChip("BZ2", name: "Bzip2", active: true)
                     formatChip("XZ", name: "XZ", active: true)
-                    formatChip("EXE", name: "NSIS only", active: true)
+                    formatChip("ZST", name: "Zstandard", active: true)
+                    formatChip("LZ4", name: "LZ4", active: true)
+                    formatChip("EXE", name: "NSIS", active: true)
                 }
             }
         }
