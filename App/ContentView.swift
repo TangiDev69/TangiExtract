@@ -535,7 +535,7 @@ private struct FileBrowserView: View {
             .navigationBarTitleDisplayMode(.large)
             .searchable(text: $searchText, prompt: "Find a file or folder")
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItem(placement: .navigationBarTrailing) {
                     Menu {
                         Button {
                             sortNewestFirst = true
