@@ -8,6 +8,8 @@ TangiExtract is a lightweight, on-device iOS extractor and file browser for supp
 
 - [x] Native extraction of ZIP archives with traversal, symlink, and expansion-limit checks
 - [x] Native extraction of TAR and TAR.GZ archives with path and entry-type checks
+- [x] Native 7Z extraction with path and output-size checks
+- [x] Standalone GZ, BZ2, and XZ stream decompression with output-size limits
 - [x] Native extraction of supported NSIS-based Windows `.exe` installers
 - [x] Direct extraction from the selected source URL without keeping a duplicate copy
 - [x] Temporary job directories with cleanup after extraction
@@ -16,7 +18,7 @@ TangiExtract is a lightweight, on-device iOS extractor and file browser for supp
 - [x] Appearance preference and post-extraction navigation setting
 - [x] Generated app icon and iOS ARM64 GitHub Actions build
 - [x] Automated NSIS extraction regression test
-- [ ] 7Z, RAR, standalone GZ, BZ2, and XZ support
+- [ ] RAR support (pending a safe iOS-compatible integration)
 - [ ] File signature detection and archive preview
 - [ ] Batch extraction, persistent extraction history, progress, and cancellation
 - [ ] Additional installer formats, including Inno Setup and MSI
@@ -38,7 +40,7 @@ A short-lived working directory is created in the app's temporary cache area whi
 - [Download the latest unsigned development IPA](https://github.com/TangiDev69/TangiExtract/releases/latest)
 - [View GitHub Actions builds](https://github.com/TangiDev69/TangiExtract/actions)
 
-**Current compatibility:** `.zip`, `.tar`, `.tar.gz` / `.tgz` archives and selected Windows `.exe` files that are valid NSIS installers. `.exe` is a generic executable container, not a single archive format; only NSIS-compatible installers are supported at present. Ordinary applications, Inno Setup installers, MSI packages, and arbitrary EXE files are not currently supported. TangiExtract parses supported installers as data and never launches them. Physical-device installation and runtime testing are separate from CI build checks.
+**Current compatibility:** `.zip`, `.7z`, `.tar`, `.tar.gz` / `.tgz`, `.gz`, `.bz2`, and `.xz` archives and selected Windows `.exe` files that are valid NSIS installers. `.exe` is a generic executable container, not a single archive format; only NSIS-compatible installers are supported at present. RAR archives, ordinary applications, Inno Setup installers, MSI packages, and arbitrary EXE files are not currently supported. TangiExtract parses supported installers as data and never launches them. Physical-device installation and runtime testing are separate from CI build checks.
 
 ## Architecture
 
