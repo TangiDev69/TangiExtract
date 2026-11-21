@@ -185,7 +185,7 @@ private struct HomeView: View {
             RoundedRectangle(cornerRadius: 28, style: .continuous)
                 .fill(
                     LinearGradient(colors: [
-                        Color.white.opacity(0.96),
+                        TangiPalette.card,
                         Color(red: 1.0, green: 0.94, blue: 0.98),
                         Color(red: 0.93, green: 0.91, blue: 1.0)
                     ], startPoint: .topLeading, endPoint: .bottomTrailing)
@@ -757,6 +757,16 @@ private struct SettingsView: View {
                             Label("Haptic feedback", systemImage: "hand.tap")
                         }
                         .tint(TangiPalette.lavender)
+                        .listRowBackground(TangiPalette.card.opacity(0.92))
+
+                        Button {
+                            if hapticsEnabled {
+                                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                            }
+                        } label: {
+                            Label("Test haptic feedback", systemImage: "waveform")
+                        }
+                        .disabled(!hapticsEnabled)
                         .listRowBackground(TangiPalette.card.opacity(0.92))
 
                         LabeledContent {
