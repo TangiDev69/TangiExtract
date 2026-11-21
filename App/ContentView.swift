@@ -516,6 +516,14 @@ private struct FileBrowserView: View {
         }
     }
 
+    private var deleteConfirmationMessage: String {
+        guard let target = deleteTarget,
+              (try? target.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true else {
+            return "This permanently removes the selected item from TangiExtract."
+        }
+        return "This permanently removes this folder and everything inside it from TangiExtract."
+    }
+
     private var visibleItems: [LocalFileItem] {
         let filtered = searchText.isEmpty ? items : items.filter {
             $0.name.localizedCaseInsensitiveContains(searchText)
@@ -626,7 +634,7 @@ private struct FileBrowserView: View {
                 Button("Cancel", role: .cancel) {}
                 Button("Delete", role: .destructive) { deleteFile() }
             } message: {
-                Text(deleteTarget?.hasDirectoryPath == true ? "This permanently removes this folder and everything inside it from TangiExtract." : (deleteTarget.map { (try? $0.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true } == true ? "This permanently removes this folder and everything inside it from TangiExtract." : "This permanently removes the selected item from TangiExtract."))
+                Text(deleteConfirmationMessage)
             }
             .alert("File operation failed", isPresented: Binding(
                 get: { errorText != nil },
