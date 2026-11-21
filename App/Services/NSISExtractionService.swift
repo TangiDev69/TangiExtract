@@ -11,6 +11,12 @@ private func tangiextract_zip_extract(
 @_silgen_name("tangiextract_tar_extract")
 private func tangiextract_tar_extract(_ inputPath: UnsafePointer<CChar>, _ outputPath: UnsafePointer<CChar>, _ gzip: Int32, _ errorBuffer: UnsafeMutablePointer<CChar>, _ errorCapacity: Int) -> Int32
 
+@_silgen_name("tangiextract_7z_extract")
+private func tangiextract_7z_extract(_ inputPath: UnsafePointer<CChar>, _ outputPath: UnsafePointer<CChar>, _ errorBuffer: UnsafeMutablePointer<CChar>, _ errorCapacity: Int) -> Int32
+
+@_silgen_name("tangiextract_stream_extract")
+private func tangiextract_stream_extract(_ inputPath: UnsafePointer<CChar>, _ outputPath: UnsafePointer<CChar>, _ kind: Int32, _ errorBuffer: UnsafeMutablePointer<CChar>, _ errorCapacity: Int) -> Int32
+
 @_silgen_name("tangiextract_nsis_extract")
 private func tangiextract_nsis_extract(
     _ inputPath: UnsafePointer<CChar>,
@@ -27,7 +33,7 @@ enum ExtractionServiceError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .unsupportedFormat:
-            return "Supported formats are ZIP, TAR, TAR.GZ archives and NSIS-based Windows installers (.exe)."
+            return "Supported formats are ZIP, 7Z, TAR, TAR.GZ, TGZ, GZ, BZ2, XZ archives and NSIS-based Windows installers (.exe)."
         case .cannotCreateStorage:
             return "TangiExtract could not prepare its temporary extraction folder."
         case .extractionFailed(let detail):
@@ -51,7 +57,9 @@ enum ExtractionService {
         let lowerName = sourceURL.lastPathComponent.lowercased()
         let isTarGzip = lowerName.hasSuffix(".tar.gz") || fileExtension == "tgz"
         let isTar = fileExtension == "tar"
-        guard fileExtension == "exe" || fileExtension == "zip" || isTarGzip || isTar else {
+        let is7z = fileExtension == "7z"
+        let streamKind: Int32 = fileExtension == "gz" ? 1 : (fileExtension == "bz2" ? 2 : (fileExtension == "xz" ? 3 : 0))
+        guard fileExtension == "exe" || fileExtension == "zip" || isTarGzip || isTar || is7z || streamKind != 0 else {
             throw ExtractionServiceError.unsupportedFormat
         }
 
@@ -83,6 +91,14 @@ enum ExtractionService {
                     errorBuffer.withUnsafeMutableBufferPointer { buffer in
                         if fileExtension == "zip" {
                             tangiextract_zip_extract(inputPath, outputPath, buffer.baseAddress!, buffer.count)
+                        } else if is7z {
+                            tangiextract_7z_extract(inputPath, outputPath, buffer.baseAddress!, buffer.count)
+                        } else if streamKind != 0 && !isTarGzip {
+                            let outputFileName = sourceURL.deletingPathExtension().lastPathComponent
+                            let outputFile = outputDirectory.appendingPathComponent(outputFileName)
+                            return outputFile.path.withCString { outputPath in
+                                tangiextract_stream_extract(inputPath, outputPath, streamKind, buffer.baseAddress!, buffer.count)
+                            }
                         } else if isTar || isTarGzip {
                             tangiextract_tar_extract(inputPath, outputPath, isTarGzip ? 1 : 0, buffer.baseAddress!, buffer.count)
                         } else {
