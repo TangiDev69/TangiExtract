@@ -33,10 +33,10 @@ enum ExtractionServiceError: LocalizedError {
     }
 }
 
-enum NSISExtractionService {
+enum ExtractionService {
     /// Extracts directly from the selected file URL. The source file is never
     /// copied into the app's storage; only extracted output is retained.
-    static func extractInstaller(at sourceURL: URL) throws -> URL {
+    static func extractFile(at sourceURL: URL) throws -> URL {
         let hasSecurityScope = sourceURL.startAccessingSecurityScopedResource()
         defer {
             if hasSecurityScope {
