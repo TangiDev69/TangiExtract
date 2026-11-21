@@ -272,6 +272,8 @@ private struct HomeView: View {
             sectionHeading("Supported formats", trailing: "ON-DEVICE")
             HStack(spacing: 10) {
                 formatChip("ZIP", name: "Archive", active: true)
+                formatChip("TAR", name: "Archive", active: true)
+                formatChip("TGZ", name: "Gzip TAR", active: true)
                 formatChip("EXE", name: "NSIS only", active: true)
             }
         }
