@@ -9,7 +9,8 @@ TangiExtract is a lightweight, on-device iOS extractor and file browser for supp
 - [x] Native extraction of ZIP archives with traversal, symlink, and expansion-limit checks
 - [x] Native extraction of TAR and TAR.GZ archives with path and entry-type checks
 - [x] Native 7Z extraction with path and output-size checks
-- [x] Standalone GZ, BZ2, and XZ stream decompression with output-size limits
+- [x] Standalone GZ, BZ2, XZ, Zstandard, and LZ4 stream decompression with output-size limits
+- [x] TAR.GZ, TAR.BZ2, TAR.XZ, TAR.ZST, and TAR.LZ4 support
 - [x] Native extraction of supported NSIS-based Windows `.exe` installers
 - [x] Direct extraction from the selected source URL without keeping a duplicate copy
 - [x] Temporary job directories with cleanup after extraction
@@ -22,6 +23,8 @@ TangiExtract is a lightweight, on-device iOS extractor and file browser for supp
 - [ ] File signature detection and archive preview
 - [ ] Batch extraction, persistent extraction history, progress, and cancellation
 - [ ] Additional installer formats, including Inno Setup and MSI
+
+**Device testing status:** NSIS-compatible EXE extraction has been tested successfully on-device. No other format has been tested on-device yet; ZIP, 7Z, TAR, compressed TAR, and standalone compression support are implemented but remain unverified on the user's device.
 
 **Format support:** A recognized file type is not necessarily an extractable file type. Unsupported formats are reported instead of being treated as extractable. Windows installers are parsed as data; TangiExtract never executes Windows programs.
 
