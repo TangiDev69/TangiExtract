@@ -396,7 +396,7 @@ private struct DreamyBackground: View {
                         for (index, particle) in particles.enumerated() {
                             let (symbol, x, y, fontSize) = particle
                             let fall = (time * (8 + Double(index % 5) * 2) + Double(index) * 61).truncatingRemainder(dividingBy: Double(size.height + 100))
-                            let sway = sin(time * 0.55 + Double(index) * 1.31) * 15
+                            let sway = CGFloat(sin(time * 0.55 + Double(index) * 1.31) * 15)
                             let px = x * size.width + sway + stir.width * CGFloat((index % 3) - 1) * 0.15
                             let py = CGFloat(fall) - 45 + y * 20 + stir.height * CGFloat((index % 4) - 2) * 0.12
                             context.opacity = colorScheme == .dark ? 0.52 : 0.76
