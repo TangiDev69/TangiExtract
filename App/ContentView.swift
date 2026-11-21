@@ -143,7 +143,7 @@ private struct HomeView: View {
                 .foregroundStyle(TangiPalette.ink)
                 .fixedSize(horizontal: false, vertical: true)
 
-            Text("Pick an installer and unpack its contents right here. Your original file stays where it is.")
+            Text("Pick an archive or compatible installer and unpack its contents here. Your original file stays where it is.")
                 .font(.system(size: 14, weight: .medium, design: .rounded))
                 .foregroundStyle(TangiPalette.ink.opacity(0.68))
                 .fixedSize(horizontal: false, vertical: true)
