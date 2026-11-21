@@ -8,6 +8,9 @@ private func tangiextract_zip_extract(
     _ errorCapacity: Int
 ) -> Int32
 
+@_silgen_name("tangiextract_tar_extract")
+private func tangiextract_tar_extract(_ inputPath: UnsafePointer<CChar>, _ outputPath: UnsafePointer<CChar>, _ gzip: Int32, _ errorBuffer: UnsafeMutablePointer<CChar>, _ errorCapacity: Int) -> Int32
+
 @_silgen_name("tangiextract_nsis_extract")
 private func tangiextract_nsis_extract(
     _ inputPath: UnsafePointer<CChar>,
@@ -45,7 +48,10 @@ enum ExtractionService {
         }
 
         let fileExtension = sourceURL.pathExtension.lowercased()
-        guard fileExtension == "exe" || fileExtension == "zip" else {
+        let lowerName = sourceURL.lastPathComponent.lowercased()
+        let isTarGzip = lowerName.hasSuffix(".tar.gz") || fileExtension == "tgz"
+        let isTar = fileExtension == "tar"
+        guard fileExtension == "exe" || fileExtension == "zip" || isTarGzip || isTar else {
             throw ExtractionServiceError.unsupportedFormat
         }
 
@@ -77,6 +83,8 @@ enum ExtractionService {
                     errorBuffer.withUnsafeMutableBufferPointer { buffer in
                         if fileExtension == "zip" {
                             tangiextract_zip_extract(inputPath, outputPath, buffer.baseAddress!, buffer.count)
+                        } else if isTar || isTarGzip {
+                            tangiextract_tar_extract(inputPath, outputPath, isTarGzip ? 1 : 0, buffer.baseAddress!, buffer.count)
                         } else {
                             tangiextract_nsis_extract(inputPath, outputPath, buffer.baseAddress!, buffer.count)
                         }
