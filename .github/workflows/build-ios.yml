@@ -38,11 +38,19 @@ jobs:
 
       - name: Test native extraction crate
         working-directory: Rust
-        run: cargo test --locked
+        run: cargo test
+
+      - name: Reproduce AssaultCube NSIS importer regression sample
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 3 --output /tmp/AssaultCube_v1.3.0.2.exe "https://github.com/assaultcube/AC/releases/download/v1.3.0.2/AssaultCube_v1.3.0.2_LockdownEdition.exe"
+          cargo run --manifest-path Rust/Cargo.toml --example extract_installer -- /tmp/AssaultCube_v1.3.0.2.exe /tmp/tangiextract-nsis-regression
+          find /tmp/tangiextract-nsis-regression -path '*/config/font.cfg' -print -quit | grep -q .
+          find /tmp/tangiextract-nsis-regression -path '*/packages/maps/official/*.cgz' -print -quit | grep -q .
 
       - name: Build Rust static library for iOS ARM64
         working-directory: Rust
-        run: cargo build --release --target aarch64-apple-ios --locked
+        run: cargo build --release --target aarch64-apple-ios
 
       - name: Verify Rust static library
         run: |
