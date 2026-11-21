@@ -146,7 +146,7 @@ jobs:
           generate_release_notes: false
           body: |
             Automated unsigned iOS IPA release from the main branch.
-            Implemented formats: ZIP, 7Z, TAR, TAR.GZ / TGZ, TAR.BZ2 / TBZ2, TAR.XZ / TXZ, TAR.ZST, TAR.LZ4, standalone GZ, BZ2, XZ, ZST, LZ4, and supported NSIS-compatible EXE installers.
-            Only EXE extraction has been confirmed on-device by the developer. Other formats remain unverified on-device. RAR is planned and is not included in this build.
+            Implemented formats: ZIP, 7Z, single-volume unencrypted RAR, TAR, TAR.GZ / TGZ, TAR.BZ2 / TBZ2, TAR.XZ / TXZ, TAR.ZST, TAR.LZ4, standalone GZ, BZ2, XZ, ZST, LZ4, and supported NSIS-compatible EXE installers.
+            Only EXE extraction has been confirmed on-device by the developer. Other formats remain unverified on-device. RAR support is included, but has not yet been tested on a physical device. Password-protected and multipart RAR archives are not supported.
             This is an unsigned sideloadable build, not an App Store release. The GitHub release is marked as the latest release for easier discovery.
           files: TangiExtract.ipa
