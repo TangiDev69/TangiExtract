@@ -272,9 +272,10 @@ private struct HomeView: View {
 
     private var formatSection: some View {
         VStack(alignment: .leading, spacing: 11) {
-            sectionHeading("Supported formats", trailing: "CURRENT BUILD")
+            sectionHeading("Supported formats", trailing: "ON-DEVICE")
             HStack(spacing: 10) {
-                formatChip("EXE", name: "NSIS", active: true)
+                formatChip("ZIP", name: "Archive", active: true)
+                formatChip("EXE", name: "NSIS only", active: true)
             }
         }
     }
@@ -330,7 +331,7 @@ private struct HomeView: View {
             Task {
                 do {
                     let destination = try await Task.detached(priority: .userInitiated) {
-                        try NSISExtractionService.extractInstaller(at: url)
+                        try ExtractionService.extractFile(at: url)
                     }.value
                     recentFolder = destination
                     recentFileName = url.lastPathComponent
