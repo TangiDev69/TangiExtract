@@ -192,6 +192,13 @@ pub fn extract_rar(input: &Path, output: &Path) -> Result<(), String> {
             return Err("Multi-volume or split RAR entries are not supported yet.".into());
         }
         let relative = safe_relative(&entry.filename.to_string_lossy(), "RAR")?;
+        if !seen.insert(relative.clone()) {
+            return Err(format!("Duplicate RAR destination rejected: {}", relative.display()));
+        }
+        // Unix-mode attributes encode symlink file types in the high bits.
+        if entry.file_attr & 0o170000 == 0o120000 {
+            return Err(format!("RAR symbolic links are not extracted: {}", relative.display()));
+        }
         let destination = output.join(&relative);
         if entry.is_directory() {
             fs::create_dir_all(&destination).map_err(|e| format!("Cannot create RAR folder: {e}"))?;
