@@ -14,3 +14,7 @@ nsis = { git = "https://github.com/ATRAPSLLC/nsis-rs", rev = "ddab1fd304007cf5a2
 zip = { version = "2.4", default-features = false, features = ["deflate"] }
 tar = "0.4"
 flate2 = { version = "1", default-features = false, features = ["rust_backend"] }
+
+sevenz-rust2 = { version = "0.25", default-features = true }
+bzip2 = "0.5"
+xz2 = "0.1"
