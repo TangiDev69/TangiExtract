@@ -6,7 +6,7 @@ TangiExtract is a lightweight, on-device iOS extractor and file browser for supp
 
 ## Current development status
 
-- [x] Native NSIS Windows installer extraction
+- [x] Native extraction of supported NSIS-based Windows `.exe` installers
 - [x] Direct extraction from the selected source URL without keeping a duplicate copy
 - [x] Temporary job directories with cleanup after extraction
 - [x] Pastel SwiftUI home screen, My Files browser, and Settings
@@ -36,7 +36,7 @@ A short-lived working directory is created in the app's temporary cache area whi
 - [Download the latest unsigned development IPA](https://github.com/TangiDev69/TangiExtract/releases/latest)
 - [View GitHub Actions builds](https://github.com/TangiDev69/TangiExtract/actions)
 
-The current extraction backend supports NSIS installers only. Physical-device installation and runtime testing are separate from CI build checks.
+**Current compatibility:** selected Windows `.exe` files that are valid NSIS installers. `.exe` is a generic executable container, not a single archive format; ordinary applications, Inno Setup installers, MSI packages, and arbitrary EXE files are not currently supported. TangiExtract parses supported installers as data and never launches them. Physical-device installation and runtime testing are separate from CI build checks.
 
 ## Architecture
 
