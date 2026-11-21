@@ -1,7 +1,5 @@
 # TangiExtract
 
-**Everything inside. Nothing left behind.**
-
 TangiExtract is a lightweight, on-device iOS archive and installer extractor with a built-in file browser. It is designed for importing game files, unpacking archives, and inspecting supported Windows installers—without sending files to a server.
 
 ## Features
@@ -32,10 +30,10 @@ TangiExtract is a lightweight, on-device iOS archive and installer extractor wit
 | Zstandard | `.zst` | Implemented |
 | LZ4 | `.lz4` | Implemented |
 | NSIS installers | compatible `.exe` | Implemented |
-| RAR | `.rar` | Implemented (single-volume, unencrypted) |
-| Other installer formats | MSI, Inno Setup, etc. | Planned |
+| RAR | `.rar` | Implemented (single-volume, unencrypted) |\n| CAB | `.cab` | Implemented |
+| Other installer formats | MSI, Inno Setup, etc. | Not supported |
 
-**Device testing:** NSIS-compatible EXE extraction has been confirmed working on the developer's device. RAR support has been added to the code and CI build, but it has not yet been tested on a physical device. Other formats also remain unverified on-device. CI/build checks do not replace device testing.
+**Device testing:** NSIS-compatible EXE extraction has been confirmed working on the developer's device. RAR and CAB support are implemented in the code and CI build, but neither has been confirmed on a physical device. Other archive formats also remain unverified on-device. CI/build checks do not replace device testing.
 
 A file extension alone does not guarantee support. EXE is a generic executable container; only supported NSIS installer files are handled. Unsupported or malformed files should return an error instead of being launched.
 
@@ -59,10 +57,6 @@ A file extension alone does not guarantee support. EXE is a generic executable c
 
 The IPA is unsigned and is intended for compatible sideloading tools such as SideStore, AltStore, and LiveContainer. Installation behavior varies by tool and device.
 
-## Project status and roadmap
-
-The project is actively developed. Current priorities are validating RAR on-device, improving import/share workflows, adding automated fixtures for more archive formats, and expanding archive-format coverage. Potential next formats include CAB, CPIO, AR, ISO/IMG, and more installer families; they will only be listed as supported after implementation and testing. Additional potential formats include CAB, CPIO, AR, ISO/IMG, and more installer families; these will only be listed as supported after implementation and testing.
-
 ## Architecture
 
 - **SwiftUI:** UI, document picker, file browser, settings, and iOS file access.
@@ -72,7 +66,7 @@ The project is actively developed. Current priorities are validating RAR on-devi
 
 ## Security notes
 
-Extraction is subject to resource limits and path validation. ZIP extraction rejects unsafe paths and symbolic links; TAR extraction rejects unsafe paths, links, and special entries. RAR extraction is currently limited to single-volume, unencrypted archives; password-protected and multipart archives are not supported in the app yet. Additional formats such as CAB, CPIO, AR, ISO/IMG, and more installer families remain under consideration. This project is still evolving and should not be treated as a hardened universal archive-extraction suite. Be cautious with untrusted archives.
+Extraction is subject to resource limits and path validation. ZIP extraction rejects unsafe paths and symbolic links; TAR extraction rejects unsafe paths, links, and special entries. RAR extraction is currently limited to single-volume, unencrypted archives; password-protected and multipart archives are not supported. CAB decoding is handled by the native CAB library. CPIO, AR, ISO/IMG, and additional installer families are not supported yet. This extractor is still evolving; be cautious with untrusted archives.
 
 ## License and third-party notices
 
