@@ -99,3 +99,102 @@ pub unsafe extern "C" fn tangiextract_tar_extract(input: *const c_char, output: 
         Err(e) => { write_error(error, cap, &e); 1 }
     }
 }
+
+fn safe_relative(raw: &str, label: &str) -> Result<std::path::PathBuf, String> {
+    let normalized = raw.replace('\\', "/");
+    let path = Path::new(&normalized);
+    if path.as_os_str().is_empty() || path.is_absolute()
+        || path.components().any(|c| !matches!(c, Component::Normal(_))) {
+        return Err(format!("Unsafe {label} path rejected: {raw}"));
+    }
+    Ok(path.to_path_buf())
+}
+
+fn sevenz_error(message: String) -> sevenz_rust2::Error {
+    sevenz_rust2::Error::Other(std::borrow::Cow::Owned(message))
+}
+
+pub fn extract_7z(input: &Path, output: &Path) -> Result<(), String> {
+    let meta = fs::metadata(input).map_err(|e| format!("Cannot read 7Z: {e}"))?;
+    if meta.len() == 0 || meta.len() > MAX_INPUT {
+        return Err("7Z archive is empty or exceeds the 1 GB input limit.".into());
+    }
+    fs::create_dir_all(output).map_err(|e| format!("Cannot create output folder: {e}"))?;
+    let root = output.to_path_buf();
+    let mut count = 0usize;
+    let mut total = 0u64;
+    sevenz_rust2::decompress_file_with_extract_fn(input, output, |entry, reader, _library_path| {
+        count += 1;
+        if count > MAX_FILES {
+            return Err(sevenz_error("Archive contains too many entries.".into()));
+        }
+        let relative = safe_relative(&entry.name, "7Z").map_err(sevenz_error)?;
+        let destination = root.join(relative);
+        if entry.is_directory {
+            fs::create_dir_all(&destination).map_err(|e| sevenz_error(e.to_string()))?;
+            return Ok(true);
+        }
+        if entry.size > MAX_ENTRY || total > MAX_OUTPUT.saturating_sub(entry.size) {
+            return Err(sevenz_error("Expanded 7Z data exceeds the configured safety limit.".into()));
+        }
+        if let Some(parent) = destination.parent() {
+            fs::create_dir_all(parent).map_err(|e| sevenz_error(e.to_string()))?;
+        }
+        let mut file = File::create(&destination).map_err(|e| sevenz_error(e.to_string()))?;
+        let copied = io::copy(&mut (&mut *reader).take(MAX_ENTRY + 1), &mut file)
+            .map_err(|e| sevenz_error(e.to_string()))?;
+        if copied != entry.size || copied > MAX_ENTRY {
+            return Err(sevenz_error("7Z entry size mismatch or limit exceeded.".into()));
+        }
+        total = total.checked_add(copied)
+            .ok_or_else(|| sevenz_error("7Z size counter overflow.".into()))?;
+        Ok(true)
+    }).map_err(|e| format!("Cannot extract 7Z archive: {e}"))
+}
+
+pub fn extract_stream(input: &Path, output: &Path, kind: i32) -> Result<(), String> {
+    let meta = fs::metadata(input).map_err(|e| format!("Cannot read compressed file: {e}"))?;
+    if meta.len() == 0 || meta.len() > MAX_INPUT {
+        return Err("Compressed file is empty or exceeds the 1 GB input limit.".into());
+    }
+    let file = File::open(input).map_err(|e| format!("Cannot open compressed file: {e}"))?;
+    let reader: Box<dyn Read> = match kind {
+        1 => Box::new(flate2::read::GzDecoder::new(file)),
+        2 => Box::new(bzip2::read::BzDecoder::new(file)),
+        3 => Box::new(xz2::read::XzDecoder::new(file)),
+        _ => return Err("Unknown compression stream type.".into()),
+    };
+    if let Some(parent) = output.parent() {
+        fs::create_dir_all(parent).map_err(|e| format!("Cannot create output folder: {e}"))?;
+    }
+    let mut out = File::create(output).map_err(|e| format!("Cannot create output file: {e}"))?;
+    let copied = io::copy(&mut reader.take(MAX_OUTPUT + 1), &mut out)
+        .map_err(|e| format!("Cannot decompress stream: {e}"))?;
+    if copied > MAX_OUTPUT {
+        let _ = fs::remove_file(output);
+        return Err("Expanded compressed data exceeds the 2 GB safety limit.".into());
+    }
+    Ok(())
+}
+
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn tangiextract_7z_extract(input: *const c_char, output: *const c_char, error: *mut c_char, cap: usize) -> i32 {
+    if input.is_null() || output.is_null() { write_error(error, cap, "Invalid input or output path."); return 1; }
+    let i = unsafe { CStr::from_ptr(input) }.to_string_lossy();
+    let o = unsafe { CStr::from_ptr(output) }.to_string_lossy();
+    match extract_7z(Path::new(i.as_ref()), Path::new(o.as_ref())) {
+        Ok(()) => 0,
+        Err(e) => { write_error(error, cap, &e); 1 }
+    }
+}
+
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn tangiextract_stream_extract(input: *const c_char, output: *const c_char, kind: i32, error: *mut c_char, cap: usize) -> i32 {
+    if input.is_null() || output.is_null() { write_error(error, cap, "Invalid input or output path."); return 1; }
+    let i = unsafe { CStr::from_ptr(input) }.to_string_lossy();
+    let o = unsafe { CStr::from_ptr(output) }.to_string_lossy();
+    match extract_stream(Path::new(i.as_ref()), Path::new(o.as_ref()), kind) {
+        Ok(()) => 0,
+        Err(e) => { write_error(error, cap, &e); 1 }
+    }
+}
