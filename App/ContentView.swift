@@ -372,49 +372,45 @@ private struct HowItWorksSheet: View {
 
 private struct DreamyBackground: View {
     let animate: Bool
-
+    @Environment(\.colorScheme) private var colorScheme
+    @State private var stir = CGSize.zero
+    private let particles: [(String, CGFloat, CGFloat, CGFloat)] = [
+        ("🍓",0.08,0.08,19),("🍊",0.83,0.12,17),("🍒",0.28,0.22,16),("📄",0.68,0.29,15),
+        ("🍋",0.14,0.39,18),("📁",0.91,0.47,17),("🫐",0.42,0.55,16),("🍑",0.76,0.68,18),
+        ("📦",0.20,0.79,17),("🍇",0.56,0.91,18),("✨",0.94,0.88,13),("🍏",0.04,0.64,15),
+        ("🗂️",0.36,0.12,15),("🍉",0.61,0.43,17),("📃",0.10,0.94,14),("🍍",0.88,0.30,17),
+        ("🍐",0.48,0.76,16),("🧃",0.31,0.48,15),("🧸",0.72,0.08,16),("💌",0.06,0.28,14)
+    ]
     var body: some View {
         GeometryReader { proxy in
             ZStack {
-                LinearGradient(
-                    colors: [
-                        Color(uiColor: .systemBackground),
-                        Color(uiColor: .secondarySystemBackground),
-                        Color(uiColor: .systemBackground)
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                FloatingSticker(symbol: "🍓", x: proxy.size.width * 0.88, y: proxy.size.height * 0.22, size: 27, phase: animate)
-                FloatingSticker(symbol: "🍊", x: proxy.size.width * 0.10, y: proxy.size.height * 0.55, size: 23, phase: !animate)
-                FloatingSticker(symbol: "📁", x: proxy.size.width * 0.91, y: proxy.size.height * 0.70, size: 22, phase: !animate)
-                FloatingSticker(symbol: "🍒", x: proxy.size.width * 0.20, y: proxy.size.height * 0.88, size: 25, phase: animate)
-                FloatingSticker(symbol: "📄", x: proxy.size.width * 0.72, y: proxy.size.height * 0.43, size: 18, phase: animate)
+                LinearGradient(colors: colorScheme == .dark
+                    ? [Color(uiColor: .systemBackground), Color(uiColor: .secondarySystemBackground)]
+                    : [Color(red: 1, green: 0.97, blue: 0.99), Color(red: 0.96, green: 0.94, blue: 1)],
+                    startPoint: .topLeading, endPoint: .bottomTrailing)
+                TimelineView(.animation(minimumInterval: 1.0 / 12.0, paused: !animate)) { timeline in
+                    let time = timeline.date.timeIntervalSinceReferenceDate
+                    Canvas { context, size in
+                        for (index, particle) in particles.enumerated() {
+                            let (symbol, x, y, fontSize) = particle
+                            let fall = (time * (8 + Double(index % 5) * 2) + Double(index) * 61).truncatingRemainder(dividingBy: Double(size.height + 100))
+                            let sway = sin(time * 0.55 + Double(index) * 1.31) * 15
+                            let px = x * size.width + sway + stir.width * CGFloat((index % 3) - 1) * 0.15
+                            let py = CGFloat(fall) - 45 + y * 20 + stir.height * CGFloat((index % 4) - 2) * 0.12
+                            context.opacity = colorScheme == .dark ? 0.52 : 0.76
+                            context.draw(Text(symbol).font(.system(size: fontSize)), at: CGPoint(x: px, y: py))
+                        }
+                    }
+                }
             }
-            .ignoresSafeArea()
-            .animation(.easeInOut(duration: 7).repeatForever(autoreverses: true), value: animate)
+            .contentShape(Rectangle())
+            .gesture(DragGesture(minimumDistance: 0).onChanged { value in
+                stir = value.translation
+            }.onEnded { _ in
+                withAnimation(.spring(response: 0.8, dampingFraction: 0.65)) { stir = .zero }
+            })
         }
         .ignoresSafeArea()
-    }
-}
-
-private struct FloatingSticker: View {
-    let symbol: String
-    let x: CGFloat
-    let y: CGFloat
-    let size: CGFloat
-    let phase: Bool
-    @State private var isPopped = false
-    var body: some View {
-        Text(symbol)
-            .font(.system(size: isPopped ? size * 1.35 : size))
-            .rotationEffect(.degrees(isPopped ? 14 : -9))
-            .position(x: x, y: y + (phase ? -7 : 7))
-            .animation(.easeInOut(duration: 3.8).repeatForever(autoreverses: true), value: phase)
-            .animation(.spring(response: 0.28, dampingFraction: 0.48), value: isPopped)
-            .contentShape(Rectangle())
-            .onTapGesture { isPopped.toggle() }
-            .accessibilityLabel("Decorative sticker")
     }
 }
 
