@@ -64,7 +64,8 @@ enum ExtractionService {
             (lowerName.hasSuffix(".tar.zst") ? 4 : (lowerName.hasSuffix(".tar.lz4") ? 5 : 0))))
         let isTarCompressed = tarCompression != 0
         let isTar = fileExtension == "tar"
-        let is7z = fileExtension == "7z"\n        let isRar = fileExtension == "rar"
+        let is7z = fileExtension == "7z"
+        let isRar = fileExtension == "rar"
         let streamKind: Int32 = fileExtension == "gz" ? 1 : (fileExtension == "bz2" ? 2 :
             (fileExtension == "xz" ? 3 : (fileExtension == "zst" ? 4 : (fileExtension == "lz4" ? 5 : 0))))
         guard fileExtension == "exe" || fileExtension == "zip" || isTarCompressed || isTar || is7z || isRar || streamKind != 0 else {
