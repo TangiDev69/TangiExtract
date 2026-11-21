@@ -176,7 +176,7 @@ private struct HomeView: View {
 
             HStack(spacing: 6) {
                 Image(systemName: "checkmark.shield.fill")
-                Text("No source-file copy • On-device extraction")
+                Text("Temporary working copy • On-device extraction")
             }
             .font(.system(size: 11, weight: .semibold, design: .rounded))
             .foregroundStyle(TangiPalette.deepLavender.opacity(0.82))
@@ -269,7 +269,7 @@ private struct HomeView: View {
 
     private var formatSection: some View {
         VStack(alignment: .leading, spacing: 11) {
-            sectionHeading("Supported formats", trailing: "ON-DEVICE")
+            sectionHeading("Supported formats", trailing: "SUPPORTED")
             VStack(alignment: .leading, spacing: 9) {
                 HStack(spacing: 8) {
                     formatChip("ZIP", name: "Archive", active: true)
@@ -295,6 +295,10 @@ private struct HomeView: View {
                     formatChip("LZ4", name: "LZ4", active: true)
                     formatChip("EXE", name: "NSIS", active: true)
                 }
+                HStack(spacing: 8) { formatChip("ISO", name: "Disc image", active: true); formatChip("CPIO", name: "Archive", active: true); formatChip("AR", name: "Unix archive", active: true); formatChip("LHA", name: "LZH", active: true) }
+                HStack(spacing: 8) { formatChip("ARJ", name: "Archive", active: true); formatChip("XAR", name: "Archive", active: true); formatChip("WIM", name: "Windows image", active: true); formatChip("DMG", name: "Apple image", active: true) }
+                HStack(spacing: 8) { formatChip("MSI", name: "Installer data", active: true); formatChip("CHM", name: "Help archive", active: true); formatChip("RPM", name: "Package", active: true); formatChip("LZIP", name: "Compression", active: true) }
+                HStack(spacing: 8) { formatChip("LZMA", name: "Compression", active: true); formatChip("ZOO", name: "Archive", active: true); formatChip("ALZ", name: "Archive", active: true); formatChip("EGG", name: "Archive", active: true) }
             }
         }
     }
@@ -381,17 +385,17 @@ private struct HowItWorksSheet: View {
 
                 instructionCard(
                     title: "1. Choose a file",
-                    detail: "Tap “Choose a file to extract” and select a supported archive or installer in the Files picker.",
+                    detail: "Tap “Choose a file to extract” and select a supported archive or container in Files. TangiExtract coordinates access and stages a temporary working copy before extraction.",
                     icon: "doc.badge.plus"
                 )
                 instructionCard(
                     title: "If selecting the file does nothing",
-                    detail: "In the Files app, press and hold the file, tap Share, then choose TangiExtract. If you use TangiExtract inside LiveContainer, share the file to LiveContainer first, then select TangiExtract from its app list.",
+                    detail: "You normally should not need Share. If the Files picker cannot expose a file in your sideloading environment, use Share as a fallback; LiveContainer may require importing it into its own file area first.",
                     icon: "square.and.arrow.up"
                 )
                 instructionCard(
                     title: "2. Extract on your device",
-                    detail: "TangiExtract processes the selected file locally. The original file is not copied into the app or modified.",
+                    detail: "TangiExtract makes a temporary, coordinated local working copy, extracts on-device, then removes that temporary copy. Your original file is left unchanged.",
                     icon: "hand.raised.fill"
                 )
                 instructionCard(
