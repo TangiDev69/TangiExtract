@@ -2,15 +2,13 @@ TangiExtract third-party notices
 
 NSIS extraction implementation
 -------------------------------
-The initial NSIS extraction module in Rust/src/installers/nsis.rs is migrated
-from TangiDev69/Assaultcube-iOS-port, ios/NSISExtractor/src/lib.rs.
-
-The upstream NSIS parser dependency is nsis-rs:
+The initial NSIS extraction module uses the nsis-rs parser:
 https://github.com/ATRAPSLLC/nsis-rs
 Pinned revision: ddab1fd304007cf5a2e1b4b6098a4055b49b48e5
 
 The upstream NSIS implementation is distributed under the Apache License,
-Version 2.0. The accompanying LICENSE file contains that license text.
+Version 2.0. The accompanying LICENSE file contains the applicable license
+text.
 
-The original C ABI symbol ac_nsis_extract is retained during migration.
-No AssaultCube game engine source code or game assets are included.
+The native extraction interface is maintained by TangiExtract. No game
+engine source code or game assets are included.
