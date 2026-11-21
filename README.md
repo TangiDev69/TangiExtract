@@ -6,7 +6,8 @@ TangiExtract is a lightweight, on-device iOS archive and installer extractor wit
 
 - Extract supported archives and compression streams locally on iPhone or iPad.
 - Parse supported NSIS Windows installers (`.exe`) as data; Windows programs are never executed.
-- Keep the original source file in its original location.
+- Open files directly from the iOS Files picker, including supported document-provider locations, using coordinated reads and temporary staging.
+- Keep the original source file in its original location and unchanged.
 - Browse extracted content in the in-app **My Files** browser.
 - Search, sort, preview with Quick Look, share, rename, and delete extracted items.
 - Light, dark, and system appearance settings.
@@ -14,40 +15,33 @@ TangiExtract is a lightweight, on-device iOS archive and installer extractor wit
 
 ## Supported formats
 
-| Format | Extensions | Status |
+The original extraction engines remain in place for the common formats. An additional pure-Rust engine adds broad archive, disk-image, document-container and installer-container support.
+
+| Family | Formats / extensions | Notes |
 |---|---|---|
-| ZIP | `.zip` | Implemented |
-| 7-Zip | `.7z` | Implemented |
-| TAR | `.tar` | Implemented |
-| TAR + Gzip | `.tar.gz`, `.tgz` | Implemented |
-| TAR + Bzip2 | `.tar.bz2`, `.tbz2` | Implemented |
-| TAR + XZ | `.tar.xz`, `.txz` | Implemented |
-| TAR + Zstandard | `.tar.zst` | Implemented |
-| TAR + LZ4 | `.tar.lz4` | Implemented |
-| Gzip | `.gz` | Implemented |
-| Bzip2 | `.bz2` | Implemented |
-| XZ | `.xz` | Implemented |
-| Zstandard | `.zst` | Implemented |
-| LZ4 | `.lz4` | Implemented |
-| NSIS installers | compatible `.exe` | Implemented |
-| RAR | `.rar` | Implemented (single-volume, unencrypted) |
-| CAB | `.cab` | Implemented |
-| Other installer formats | MSI, Inno Setup, etc. | Not supported |
+| Common archives | ZIP, 7Z, RAR, CAB, TAR | Dedicated extraction paths; RAR is single-volume and unencrypted |
+| TAR compression | TGZ, TAR.GZ, TBZ2, TAR.BZ2, TXZ, TAR.XZ, TAR.ZST, TAR.LZ4 | Dedicated extraction paths |
+| Standalone compression | GZ, BZ2, XZ, ZST, LZ4 | Dedicated extraction paths |
+| Additional archives | ARJ, LHA/LZH, ARC, ZOO, ALZ, EGG, AR, CPIO, XAR, RPM | Extended engine |
+| Disk images / filesystems | ISO/UDF, DMG, VHD, VHDX, QCOW2, VMDK, WIM, FAT, exFAT, NTFS, ext, SquashFS, cramfs, romfs, EROFS | Extended engine; output depends on the image and filesystem |
+| Installer / help containers | MSI/OLE2, Inno Setup, InstallShield containers, CHM, NSIS-compatible EXE | Extended engine where implemented; NSIS also has the dedicated path |
+| Embedded-content containers | PDF, RTF, email/MIME, TNEF, OneNote, XDP, AppleSingle/AppleDouble, BinHex, SWF | Extracts supported embedded streams or attachments, not a full document conversion |
 
-**Device testing:** NSIS-compatible EXE extraction has been confirmed working on the developer's device. RAR and CAB support are implemented in the code and CI build, but neither has been confirmed on a physical device. CAB cabinet sets spanning multiple files are not supported. Other archive formats also remain unverified on-device. CI/build checks do not replace device testing.
+The extended engine recognises additional formats and uses a bounded extraction budget. Some formats are metadata-only, recognised but not fully decoded, or expose embedded streams rather than a conventional directory tree. Unsupported codecs, encrypted members, and malformed content return an error rather than being silently treated as extracted.
 
-A file extension alone does not guarantee support. EXE is a generic executable container; only supported NSIS installer files are handled. Unsupported or malformed files should return an error instead of being launched.
+**Confirmed on the developer's device:** ZIP, 7Z, RAR, TAR, TAR.GZ, and standalone GZ. NSIS-compatible EXE extraction was confirmed in earlier testing. CAB and the newly added extended formats have not yet been device-tested. CI builds and parser integration do not replace real-file testing on iPhone.
 
+**Known limitations:** password-protected and multipart RAR are not supported by the dedicated RAR path; multi-cabinet CAB sets are not supported by the dedicated CAB path. The extended engine has its own format-specific limitations and resource limits. A file extension alone does not guarantee that a file is supported. Windows executables are parsed as data and never run on iOS.
 ## How to use
 
 1. Tap **Choose a file to extract** and pick the file from the iOS Files picker.
-2. If choosing a file appears to do nothing, open it in Files, press and hold the file, tap **Share**, and choose **TangiExtract**. If using TangiExtract inside LiveContainer, share the file to LiveContainer first, then select TangiExtract from the LiveContainer app list.
+2. TangiExtract coordinates access to the selected file and makes a temporary working copy before extraction. You normally do not need to share the file into the app. If the picker cannot expose it in your sideloading environment, use **Share** as a fallback; LiveContainer may require importing the file into its own file area first.
 3. When extraction completes, open **My Files** to browse the output.
 
 ## Privacy and storage
 
 - Extraction is performed on-device; files are not uploaded to a service.
-- The source is accessed directly through iOS file permissions and is not copied into TangiExtract's private storage.
+- Files-provider access is coordinated through iOS security-scoped access. A temporary working copy is made inside the app container for reliable native extraction, then deleted when the job finishes.
 - Finished output is stored under **Files → On My iPhone → TangiExtract → Extracted**.
 - Temporary working files are created for each extraction and removed after the operation.
 
@@ -67,7 +61,7 @@ The IPA is unsigned and is intended for compatible sideloading tools such as Sid
 
 ## Security notes
 
-Extraction is subject to resource limits and path validation. ZIP extraction rejects unsafe paths and symbolic links; TAR extraction rejects unsafe paths, links, and special entries. RAR extraction is currently limited to single-volume, unencrypted archives; password-protected and multipart archives are not supported. CAB decoding is handled by the native CAB library; cabinet sets spanning multiple files are not supported. CPIO, AR, ISO/IMG, and additional installer families are not supported yet. This extractor is still evolving; be cautious with untrusted archives.
+Extraction is subject to resource limits and path validation. ZIP extraction rejects unsafe paths and symbolic links; TAR extraction rejects unsafe paths, links, and special entries. RAR extraction is currently limited to single-volume, unencrypted archives; password-protected and multipart archives are not supported. CAB decoding is handled by the native CAB library; cabinet sets spanning multiple files are not supported. The extended engine covers additional archive, image, filesystem, document and installer containers; see the format table for representative families and limitations. This extractor is still evolving; be cautious with untrusted archives.
 
 ## License and third-party notices
 
