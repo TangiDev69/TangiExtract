@@ -11,6 +11,9 @@ private func tangiextract_zip_extract(
 @_silgen_name("tangiextract_tar_extract")
 private func tangiextract_tar_extract(_ inputPath: UnsafePointer<CChar>, _ outputPath: UnsafePointer<CChar>, _ gzip: Int32, _ errorBuffer: UnsafeMutablePointer<CChar>, _ errorCapacity: Int) -> Int32
 
+@_silgen_name("tangiextract_rar_extract")
+private func tangiextract_rar_extract(_ inputPath: UnsafePointer<CChar>, _ outputPath: UnsafePointer<CChar>, _ errorBuffer: UnsafeMutablePointer<CChar>, _ errorCapacity: Int) -> Int32
+
 @_silgen_name("tangiextract_7z_extract")
 private func tangiextract_7z_extract(_ inputPath: UnsafePointer<CChar>, _ outputPath: UnsafePointer<CChar>, _ errorBuffer: UnsafeMutablePointer<CChar>, _ errorCapacity: Int) -> Int32
 
@@ -33,7 +36,7 @@ enum ExtractionServiceError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .unsupportedFormat:
-            return "Supported formats are ZIP, 7Z, TAR, TAR.GZ/TGZ, TAR.BZ2/TBZ2, TAR.XZ/TXZ, TAR.ZST, TAR.LZ4, GZ, BZ2, XZ, ZST, LZ4 archives and NSIS-based Windows installers (.exe)."
+            return "Supported formats are ZIP, 7Z, RAR, TAR, TAR.GZ/TGZ, TAR.BZ2/TBZ2, TAR.XZ/TXZ, TAR.ZST, TAR.LZ4, GZ, BZ2, XZ, ZST, LZ4 archives and NSIS-based Windows installers (.exe)."
         case .cannotCreateStorage:
             return "TangiExtract could not prepare its temporary extraction folder."
         case .extractionFailed(let detail):
@@ -61,10 +64,10 @@ enum ExtractionService {
             (lowerName.hasSuffix(".tar.zst") ? 4 : (lowerName.hasSuffix(".tar.lz4") ? 5 : 0))))
         let isTarCompressed = tarCompression != 0
         let isTar = fileExtension == "tar"
-        let is7z = fileExtension == "7z"
+        let is7z = fileExtension == "7z"\n        let isRar = fileExtension == "rar"
         let streamKind: Int32 = fileExtension == "gz" ? 1 : (fileExtension == "bz2" ? 2 :
             (fileExtension == "xz" ? 3 : (fileExtension == "zst" ? 4 : (fileExtension == "lz4" ? 5 : 0))))
-        guard fileExtension == "exe" || fileExtension == "zip" || isTarCompressed || isTar || is7z || streamKind != 0 else {
+        guard fileExtension == "exe" || fileExtension == "zip" || isTarCompressed || isTar || is7z || isRar || streamKind != 0 else {
             throw ExtractionServiceError.unsupportedFormat
         }
 
