@@ -542,7 +542,17 @@ private struct FileBrowserView: View {
                                     } label: {
                                         fileRow(item)
                                     }
+                                    .buttonStyle(.plain)
                                     .listRowBackground(TangiPalette.card.opacity(0.90))
+                                    .contextMenu { itemManagementMenu(for: item) }
+                                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                        Button(role: .destructive) {
+                                            deleteTarget = item.url
+                                            showingDeleteAlert = true
+                                        } label: {
+                                            Label("Delete", systemImage: "trash")
+                                        }
+                                    }
                                 } else {
                                     Button {
                                         previewURL = item.url
@@ -551,17 +561,8 @@ private struct FileBrowserView: View {
                                     }
                                     .buttonStyle(.plain)
                                     .listRowBackground(TangiPalette.card.opacity(0.90))
-                                    .contextMenu {
-                                        ShareLink(item: item.url) {
-                                            Label("Share", systemImage: "square.and.arrow.up")
-                                        }
-                                        Button {
-                                            renameTarget = item.url
-                                            renameText = item.name
-                                            showingRename = true
-                                        } label: {
-                                            Label("Rename", systemImage: "pencil")
-                                        }
+                                    .contextMenu { itemManagementMenu(for: item) }
+                                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                                         Button(role: .destructive) {
                                             deleteTarget = item.url
                                             showingDeleteAlert = true
@@ -625,7 +626,7 @@ private struct FileBrowserView: View {
                 Button("Cancel", role: .cancel) {}
                 Button("Delete", role: .destructive) { deleteFile() }
             } message: {
-                Text("This permanently removes the selected item from TangiExtract.")
+                Text(deleteTarget?.hasDirectoryPath == true ? "This permanently removes this folder and everything inside it from TangiExtract." : (deleteTarget.map { (try? $0.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true } == true ? "This permanently removes this folder and everything inside it from TangiExtract." : "This permanently removes the selected item from TangiExtract."))
             }
             .alert("File operation failed", isPresented: Binding(
                 get: { errorText != nil },
@@ -635,6 +636,28 @@ private struct FileBrowserView: View {
             } message: {
                 Text(errorText ?? "")
             }
+        }
+    }
+
+    @ViewBuilder
+    private func itemManagementMenu(for item: LocalFileItem) -> some View {
+        if !item.isDirectory {
+            ShareLink(item: item.url) {
+                Label("Share", systemImage: "square.and.arrow.up")
+            }
+        }
+        Button {
+            renameTarget = item.url
+            renameText = item.name
+            showingRename = true
+        } label: {
+            Label("Rename", systemImage: "pencil")
+        }
+        Button(role: .destructive) {
+            deleteTarget = item.url
+            showingDeleteAlert = true
+        } label: {
+            Label("Delete", systemImage: "trash")
         }
     }
 
