@@ -90,7 +90,7 @@ private struct HomeView: View {
             )
             .sheet(isPresented: $showingHowItWorks) {
                 HowItWorksSheet()
-                    .presentationDetents([.medium])
+                    .presentationDetents([.medium, .large])
                     .presentationDragIndicator(.visible)
             }
             .alert("Couldn't extract this file", isPresented: $showError) {
@@ -366,25 +366,62 @@ private struct HomeView: View {
 
 private struct HowItWorksSheet: View {
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HStack(spacing: 10) {
-                AppMark(size: 42)
-                Text("A tiny bit of magic")
-                    .font(.system(size: 20, weight: .bold, design: .rounded))
-                    .foregroundStyle(TangiPalette.ink)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 17) {
+                HStack(spacing: 10) {
+                    AppMark(size: 42)
+                    Text("How TangiExtract works")
+                        .font(.system(size: 20, weight: .bold, design: .rounded))
+                        .foregroundStyle(TangiPalette.ink)
+                }
+
+                instructionCard(
+                    title: "1. Choose a file",
+                    detail: "Tap “Choose a file to extract” and select a supported archive or installer in the Files picker.",
+                    icon: "doc.badge.plus"
+                )
+                instructionCard(
+                    title: "If selecting the file does nothing",
+                    detail: "In the Files app, press and hold the file, tap Share, then choose TangiExtract. If you use TangiExtract inside LiveContainer, share the file to LiveContainer first, then select TangiExtract from its app list.",
+                    icon: "square.and.arrow.up"
+                )
+                instructionCard(
+                    title: "2. Extract on your device",
+                    detail: "TangiExtract processes the selected file locally. The original file is not copied into the app or modified.",
+                    icon: "hand.raised.fill"
+                )
+                instructionCard(
+                    title: "3. Find your files",
+                    detail: "Extracted contents appear in My Files. You can browse, preview, share, rename, or delete them.",
+                    icon: "folder.fill"
+                )
+                instructionCard(
+                    title: "Safety",
+                    detail: "Supported Windows installers are read as data. Windows programs are never run on your iPhone.",
+                    icon: "shield.lefthalf.filled"
+                )
             }
-            Label("Choose a supported installer from Files.", systemImage: "doc.badge.plus")
-            Label("TangiExtract reads it directly. The source is never copied.", systemImage: "hand.raised.fill")
-            Label("Extracted contents are saved in My Files.", systemImage: "folder.fill")
-            Label("Windows programs are never executed.", systemImage: "shield.lefthalf.filled")
-            Spacer(minLength: 0)
+            .font(.system(size: 13, weight: .medium, design: .rounded))
+            .foregroundStyle(TangiPalette.ink.opacity(0.82))
+            .padding(24)
+            .padding(.top, 10)
         }
-        .font(.system(size: 13, weight: .medium, design: .rounded))
-        .foregroundStyle(TangiPalette.ink.opacity(0.82))
-        .padding(24)
-        .padding(.top, 10)
-        .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color(uiColor: .systemBackground).ignoresSafeArea())
+    }
+
+    private func instructionCard(title: String, detail: String, icon: String) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Label(title, systemImage: icon)
+                .font(.system(size: 14, weight: .bold, design: .rounded))
+                .foregroundStyle(TangiPalette.deepLavender)
+            Text(detail)
+                .font(.system(size: 13, weight: .medium, design: .rounded))
+                .foregroundStyle(TangiPalette.ink.opacity(0.78))
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(14)
+        .background(TangiPalette.card, in: RoundedRectangle(cornerRadius: 17, style: .continuous))
     }
 }
 
