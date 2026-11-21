@@ -1,0 +1,13 @@
+[package]
+name = "tangiextract"
+version = "0.1.0"
+edition = "2024"
+license = "Apache-2.0"
+description = "Native extraction engines for TangiExtract"
+
+[lib]
+name = "tangiextract"
+crate-type = ["staticlib", "rlib"]
+
+[dependencies]
+nsis = { git = "https://github.com/ATRAPSLLC/nsis-rs", rev = "ddab1fd304007cf5a2e1b4b6098a4055b49b48e5" }
