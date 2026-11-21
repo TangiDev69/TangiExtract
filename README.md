@@ -2,33 +2,32 @@
 
 **Everything inside. Nothing left behind.**
 
-TangiExtract is a standalone iOS file inspection and extraction application, designed for game files, archives, and Windows installers.
-
-The project is being built incrementally. Its first native extraction backend is based on the working NSIS extractor from [TangiDev69/Assaultcube-iOS-port](https://github.com/TangiDev69/Assaultcube-iOS-port), specifically the implementation introduced and refined around commits `dc9779c`, `00367a3`, and `6e3c1fb`.
+TangiExtract is a standalone iOS file inspection and extraction application for archives, Windows installers, and game data.
 
 ## Current development status
 
-- [x] Independent repository and application scaffold
-- [x] Rust NSIS extraction code migrated as the initial compatibility baseline
+- [x] Independent iOS application and Rust extraction core
+- [x] Native NSIS Windows installer extraction
 - [x] SwiftUI application shell and document-picker integration
 - [x] iOS ARM64 GitHub Actions build pipeline
-- [x] Add a CI regression step for the historical AssaultCube 1.3.0.2 installer (execution pending)
+- [x] Automated NSIS fixture regression test
 - [ ] Harden the NSIS engine for general-purpose extraction (streaming, configurable limits, cancellation, and collision policy)
-- [ ] Add ZIP/TAR and broader archive support
-- [ ] Add format identification by file signatures
+- [ ] Add ZIP, 7Z, RAR, TAR, GZ, BZ2, and XZ archive support
+- [ ] Add file identification by signatures rather than extensions alone
 - [ ] Add archive inspection, history, batch jobs, and storage management
-- [ ] Add share-sheet import extension
+- [ ] Add share-sheet import support
+- [ ] Add further installer formats, including Inno Setup and MSI
 
-**Important:** A recognized file type is not necessarily an extractable file type. TangiExtract will report unsupported formats rather than claim universal executable or proprietary-format support.
+**Format support:** A recognized file type is not necessarily an extractable file type. TangiExtract will report unsupported formats rather than claim universal executable or proprietary-format support. Windows installers are parsed as data; TangiExtract does not execute Windows programs.
 
 ## Latest development build
 
-The first unsigned iOS ARM64 development IPA was built and published successfully on 2026-11-21. It currently supports NSIS Windows installers only.
+An unsigned iOS ARM64 development IPA has been built and published successfully. The current implementation supports NSIS Windows installers only.
 
-- [Download TangiExtract IPA](https://github.com/TangiDev69/TangiExtract/releases/download/tangiextract-build-13-1/TangiExtract.ipa)
-- [Build and test logs](https://github.com/TangiDev69/TangiExtract/actions/runs/44858872377)
+- [Download the latest TangiExtract IPA](https://github.com/TangiDev69/TangiExtract/releases/latest)
+- [View GitHub Actions builds](https://github.com/TangiDev69/TangiExtract/actions)
 
-The IPA has passed automated build and packaging checks. Physical-device installation and runtime behavior still require testing.
+The IPA has passed automated Rust tests, an NSIS extraction regression test, iOS ARM64 compilation, Xcode build, and IPA packaging checks. Physical-device installation and runtime behavior still require testing.
 
 ## Architecture
 
@@ -37,18 +36,16 @@ The IPA has passed automated build and packaging checks. Physical-device install
 - **Rust:** format-specific extraction engines and parsers.
 - **GitHub Actions:** reproducible unsigned iOS ARM64 IPA builds.
 
-The Rust crate is independent of the AssaultCube game engine. No AssaultCube engine code or game assets are included.
-
 ## Build
 
-The iOS app is built by GitHub Actions on macOS. The workflow compiles the Rust static library for `aarch64-apple-ios`, generates the Xcode project with XcodeGen, builds the app without code signing, and packages an IPA.
+GitHub Actions builds the iOS app on macOS. The workflow tests the Rust crate, compiles the Rust static library for `aarch64-apple-ios`, generates the Xcode project with XcodeGen, builds the app without code signing, and packages an IPA.
 
-Unsigned IPA output is intended for compatible sideloading workflows. It is not an App Store-signed application.
+Unsigned IPA output is intended for compatible sideloading workflows. It is not an App Store-signed application. Import the IPA into a compatible signing/sideloading tool before installation if your chosen tool requires a signed package.
 
-## Security
+## Security and current limitations
 
-The initial NSIS implementation retains the source extractor's original limits and filtering behavior as a compatibility baseline. It is **not yet the final general-purpose security model**. Do not treat this initial development build as a hardened arbitrary-file extraction utility.
+The initial NSIS implementation retains its upstream parser's existing memory use and file filtering behavior. It includes basic input/output, entry-count, path, and duplicate checks, but it is **not yet the final general-purpose security model**. Do not treat this early development build as a hardened arbitrary-file extraction utility.
 
 ## License
 
-The migrated NSIS implementation retains its upstream licensing and attribution. See [NOTICE](NOTICE) and [LICENSE](LICENSE) before redistribution. Other dependencies retain their respective licenses.
+See [NOTICE](NOTICE) and [LICENSE](LICENSE) for attribution and licensing information. Third-party dependencies retain their respective licenses.
