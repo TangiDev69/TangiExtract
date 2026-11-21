@@ -3,12 +3,6 @@
 // its existing file-type filtering. These behaviors are retained for the
 // initial integration and will be improved in separately tested changes.
 
-This is a compatibility baseline, not yet the final general-purpose NSIS
-// extraction API. In particular, the upstream implementation reads the input
-// and each decompressed entry into memory and applies its original file-type
-// filtering. Those behaviors are intentionally preserved for the first
-// migration and must be addressed in separately tested changes.
-
 use nsis::NsisInstaller;
 use std::{
     collections::HashSet,
