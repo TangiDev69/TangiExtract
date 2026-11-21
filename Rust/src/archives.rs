@@ -206,7 +206,8 @@ pub fn extract_rar(input: &Path, output: &Path) -> Result<(), String> {
             archive = current.skip().map_err(|e| format!("Cannot skip RAR directory: {e}"))?;
             continue;
         }
-        if entry.unpacked_size > MAX_ENTRY || total > MAX_OUTPUT.saturating_sub(entry.unpacked_size) {
+        let unpacked_size = entry.unpacked_size;
+        if unpacked_size > MAX_ENTRY || total > MAX_OUTPUT.saturating_sub(unpacked_size) {
             return Err("Expanded RAR data exceeds the configured safety limit.".into());
         }
         if let Some(parent) = destination.parent() {
@@ -214,7 +215,7 @@ pub fn extract_rar(input: &Path, output: &Path) -> Result<(), String> {
         }
         archive = current.extract_to(&destination)
             .map_err(|e| format!("Cannot extract RAR entry {}: {e}", relative.display()))?;
-        total = total.checked_add(entry.unpacked_size)
+        total = total.checked_add(unpacked_size)
             .ok_or("RAR size counter overflow.")?;
     }
     Ok(())
