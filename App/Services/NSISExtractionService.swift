@@ -68,7 +68,8 @@ enum ExtractionService {
         let isTarCompressed = tarCompression != 0
         let isTar = fileExtension == "tar"
         let is7z = fileExtension == "7z"
-        let isRar = fileExtension == "rar"\n        let isCab = fileExtension == "cab"
+        let isRar = fileExtension == "rar"
+        let isCab = fileExtension == "cab"
         let streamKind: Int32 = fileExtension == "gz" ? 1 : (fileExtension == "bz2" ? 2 :
             (fileExtension == "xz" ? 3 : (fileExtension == "zst" ? 4 : (fileExtension == "lz4" ? 5 : 0))))
         guard fileExtension == "exe" || fileExtension == "zip" || isTarCompressed || isTar || is7z || isRar || isCab || streamKind != 0 else {
@@ -107,6 +108,8 @@ enum ExtractionService {
                             return tangiextract_7z_extract(inputPath, outputPath, buffer.baseAddress!, buffer.count)
                         } else if isRar {
                             return tangiextract_rar_extract(inputPath, outputPath, buffer.baseAddress!, buffer.count)
+                        } else if isCab {
+                            return tangiextract_cab_extract(inputPath, outputPath, buffer.baseAddress!, buffer.count)
                         } else if streamKind != 0 && !isTarCompressed {
                             let outputFileName = sourceURL.deletingPathExtension().lastPathComponent
                             let outputFile = outputDirectory.appendingPathComponent(outputFileName)
