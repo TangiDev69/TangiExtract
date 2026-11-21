@@ -160,6 +160,65 @@ pub fn extract_7z(input: &Path, output: &Path) -> Result<(), String> {
     }).map_err(|e| format!("Cannot extract 7Z archive: {e}"))
 }
 
+
+pub fn extract_rar(input: &Path, output: &Path) -> Result<(), String> {
+    let meta = fs::metadata(input).map_err(|e| format!("Cannot read RAR: {e}"))?;
+    if meta.len() == 0 || meta.len() > MAX_INPUT {
+        return Err("RAR archive is empty or exceeds the 1 GB input limit.".into());
+    }
+    fs::create_dir_all(output).map_err(|e| format!("Cannot create output folder: {e}"))?;
+    let mut archive = unrar::Archive::new(input)
+        .open_for_processing()
+        .map_err(|e| format!("Cannot open RAR archive: {e}"))?;
+    let mut count = 0usize;
+    let mut total = 0u64;
+
+    loop {
+        let next = archive.read_header().map_err(|e| format!("Cannot read RAR header: {e}"))?;
+        let Some(mut current) = next else { break };
+        let entry = current.entry().clone();
+        count += 1;
+        if count > MAX_FILES {
+            return Err("RAR archive contains too many entries.".into());
+        }
+        if entry.is_encrypted() {
+            return Err(format!("Encrypted RAR entries are not supported without a password: {}", entry.filename.display()));
+        }
+        if entry.is_split() {
+            return Err("Multi-volume or split RAR entries are not supported yet.".into());
+        }
+        let relative = safe_relative(&entry.filename.to_string_lossy(), "RAR")?;
+        let destination = output.join(&relative);
+        if entry.is_directory() {
+            fs::create_dir_all(&destination).map_err(|e| format!("Cannot create RAR folder: {e}"))?;
+            archive = current.skip().map_err(|e| format!("Cannot skip RAR directory: {e}"))?;
+            continue;
+        }
+        if entry.unpacked_size > MAX_ENTRY || total > MAX_OUTPUT.saturating_sub(entry.unpacked_size) {
+            return Err("Expanded RAR data exceeds the configured safety limit.".into());
+        }
+        if let Some(parent) = destination.parent() {
+            fs::create_dir_all(parent).map_err(|e| format!("Cannot create RAR folder: {e}"))?;
+        }
+        archive = current.extract_to(&destination)
+            .map_err(|e| format!("Cannot extract RAR entry {}: {e}", relative.display()))?;
+        total = total.checked_add(entry.unpacked_size)
+            .ok_or("RAR size counter overflow.")?;
+    }
+    Ok(())
+}
+
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn tangiextract_rar_extract(input: *const c_char, output: *const c_char, error: *mut c_char, cap: usize) -> i32 {
+    if input.is_null() || output.is_null() { write_error(error, cap, "Invalid input or output path."); return 1; }
+    let i = unsafe { CStr::from_ptr(input) }.to_string_lossy();
+    let o = unsafe { CStr::from_ptr(output) }.to_string_lossy();
+    match extract_rar(Path::new(i.as_ref()), Path::new(o.as_ref())) {
+        Ok(()) => 0,
+        Err(e) => { write_error(error, cap, &e); 1 }
+    }
+}
+
 pub fn extract_stream(input: &Path, output: &Path, kind: i32) -> Result<(), String> {
     let meta = fs::metadata(input).map_err(|e| format!("Cannot read compressed file: {e}"))?;
     if meta.len() == 0 || meta.len() > MAX_INPUT {
