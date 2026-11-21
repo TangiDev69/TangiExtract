@@ -30,7 +30,8 @@ TangiExtract is a lightweight, on-device iOS archive and installer extractor wit
 | Zstandard | `.zst` | Implemented |
 | LZ4 | `.lz4` | Implemented |
 | NSIS installers | compatible `.exe` | Implemented |
-| RAR | `.rar` | Implemented (single-volume, unencrypted) |\n| CAB | `.cab` | Implemented |
+| RAR | `.rar` | Implemented (single-volume, unencrypted) |
+| CAB | `.cab` | Implemented |
 | Other installer formats | MSI, Inno Setup, etc. | Not supported |
 
 **Device testing:** NSIS-compatible EXE extraction has been confirmed working on the developer's device. RAR and CAB support are implemented in the code and CI build, but neither has been confirmed on a physical device. Other archive formats also remain unverified on-device. CI/build checks do not replace device testing.
