@@ -1,5 +1,13 @@
 import Foundation
 
+@_silgen_name("tangiextract_zip_extract")
+private func tangiextract_zip_extract(
+    _ inputPath: UnsafePointer<CChar>,
+    _ outputPath: UnsafePointer<CChar>,
+    _ errorBuffer: UnsafeMutablePointer<CChar>,
+    _ errorCapacity: Int
+) -> Int32
+
 @_silgen_name("tangiextract_nsis_extract")
 private func tangiextract_nsis_extract(
     _ inputPath: UnsafePointer<CChar>,
@@ -16,7 +24,7 @@ enum ExtractionServiceError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .unsupportedFormat:
-            return "This build currently extracts supported NSIS Windows installers (.exe)."
+            return "Supported formats are ZIP archives and NSIS-based Windows installers (.exe)."
         case .cannotCreateStorage:
             return "TangiExtract could not prepare its temporary extraction folder."
         case .extractionFailed(let detail):
@@ -36,7 +44,8 @@ enum NSISExtractionService {
             }
         }
 
-        guard sourceURL.pathExtension.lowercased() == "exe" else {
+        let fileExtension = sourceURL.pathExtension.lowercased()
+        guard fileExtension == "exe" || fileExtension == "zip" else {
             throw ExtractionServiceError.unsupportedFormat
         }
 
@@ -66,7 +75,11 @@ enum NSISExtractionService {
             let status = sourceURL.path.withCString { inputPath in
                 outputDirectory.path.withCString { outputPath in
                     errorBuffer.withUnsafeMutableBufferPointer { buffer in
-                        tangiextract_nsis_extract(inputPath, outputPath, buffer.baseAddress!, buffer.count)
+                        if fileExtension == "zip" {
+                            tangiextract_zip_extract(inputPath, outputPath, buffer.baseAddress!, buffer.count)
+                        } else {
+                            tangiextract_nsis_extract(inputPath, outputPath, buffer.baseAddress!, buffer.count)
+                        }
                     }
                 }
             }
