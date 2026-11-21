@@ -272,15 +272,19 @@ private struct HomeView: View {
     private var formatSection: some View {
         VStack(alignment: .leading, spacing: 11) {
             sectionHeading("Supported formats", trailing: "ON-DEVICE")
-            HStack(spacing: 10) {
-                formatChip("ZIP", name: "Archive", active: true)
-                formatChip("7Z", name: "7-Zip", active: true)
-                formatChip("TAR", name: "Archive", active: true)
-                formatChip("TGZ", name: "Gzip TAR", active: true)
-                formatChip("GZ", name: "Gzip", active: true)
-                formatChip("BZ2", name: "Bzip2", active: true)
-                formatChip("XZ", name: "XZ", active: true)
-                formatChip("EXE", name: "NSIS only", active: true)
+            VStack(alignment: .leading, spacing: 9) {
+                HStack(spacing: 8) {
+                    formatChip("ZIP", name: "Archive", active: true)
+                    formatChip("7Z", name: "7-Zip", active: true)
+                    formatChip("TAR", name: "Archive", active: true)
+                    formatChip("TGZ", name: "Gzip TAR", active: true)
+                }
+                HStack(spacing: 8) {
+                    formatChip("GZ", name: "Gzip", active: true)
+                    formatChip("BZ2", name: "Bzip2", active: true)
+                    formatChip("XZ", name: "XZ", active: true)
+                    formatChip("EXE", name: "NSIS only", active: true)
+                }
             }
         }
     }
