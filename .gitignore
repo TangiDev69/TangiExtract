@@ -1,0 +1,15 @@
+# Xcode
+DerivedData/
+*.xcodeproj/
+*.xcworkspace/
+xcuserdata/
+*.xcuserstate
+
+# Rust
+Rust/target/
+Rust/Cargo.lock
+
+# Build products
+build/
+*.ipa
+*.dSYM/
