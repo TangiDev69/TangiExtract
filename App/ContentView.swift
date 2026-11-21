@@ -29,7 +29,9 @@ struct ContentView: View {
     }
 
     var body: some View {
-        TabView(selection: $selectedTab) {
+        ZStack {
+            DreamyBackground(animate: true)
+            TabView(selection: $selectedTab) {
             HomeView(onOpenFiles: { selectedTab = 1 }) {
                 if openFilesAfterExtraction { selectedTab = 1 }
             }
@@ -44,8 +46,9 @@ struct ContentView: View {
                 .tabItem { Label("Settings", systemImage: "slider.horizontal.3") }
                 .tag(2)
         }
-        .tint(TangiPalette.deepLavender)
-        .preferredColorScheme(preferredScheme)
+            .tint(TangiPalette.deepLavender)
+            .preferredColorScheme(preferredScheme)
+        }
     }
 }
 
@@ -66,7 +69,6 @@ private struct HomeView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                DreamyBackground(animate: animateGlow)
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 22) {
                         topBar
@@ -272,8 +274,12 @@ private struct HomeView: View {
             sectionHeading("Supported formats", trailing: "ON-DEVICE")
             HStack(spacing: 10) {
                 formatChip("ZIP", name: "Archive", active: true)
+                formatChip("7Z", name: "7-Zip", active: true)
                 formatChip("TAR", name: "Archive", active: true)
                 formatChip("TGZ", name: "Gzip TAR", active: true)
+                formatChip("GZ", name: "Gzip", active: true)
+                formatChip("BZ2", name: "Bzip2", active: true)
+                formatChip("XZ", name: "XZ", active: true)
                 formatChip("EXE", name: "NSIS only", active: true)
             }
         }
@@ -375,7 +381,6 @@ private struct HowItWorksSheet: View {
 private struct DreamyBackground: View {
     let animate: Bool
     @Environment(\.colorScheme) private var colorScheme
-    @State private var stir = CGSize.zero
     private let particles: [(String, CGFloat, CGFloat, CGFloat)] = [
         ("🍓",0.08,0.08,19),("🍊",0.83,0.12,17),("🍒",0.28,0.22,16),("📄",0.68,0.29,15),
         ("🍋",0.14,0.39,18),("📁",0.91,0.47,17),("🫐",0.42,0.55,16),("🍑",0.76,0.68,18),
@@ -397,20 +402,15 @@ private struct DreamyBackground: View {
                             let (symbol, x, y, fontSize) = particle
                             let fall = (time * (8 + Double(index % 5) * 2) + Double(index) * 61).truncatingRemainder(dividingBy: Double(size.height + 100))
                             let sway = CGFloat(sin(time * 0.55 + Double(index) * 1.31) * 15)
-                            let px = x * size.width + sway + stir.width * CGFloat((index % 3) - 1) * 0.15
-                            let py = CGFloat(fall) - 45 + y * 20 + stir.height * CGFloat((index % 4) - 2) * 0.12
+                            let px = x * size.width + sway
+                            let py = CGFloat(fall) - 45 + y * 20
                             context.opacity = colorScheme == .dark ? 0.52 : 0.76
                             context.draw(Text(symbol).font(.system(size: fontSize)), at: CGPoint(x: px, y: py))
                         }
                     }
                 }
             }
-            .contentShape(Rectangle())
-            .gesture(DragGesture(minimumDistance: 0).onChanged { value in
-                stir = value.translation
-            }.onEnded { _ in
-                withAnimation(.spring(response: 0.8, dampingFraction: 0.65)) { stir = .zero }
-            })
+            .allowsHitTesting(false)
         }
         .ignoresSafeArea()
     }
@@ -474,7 +474,7 @@ private struct FileBrowserView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                TangiPalette.softBackground.ignoresSafeArea()
+                Color.clear.ignoresSafeArea()
                 if items.isEmpty {
                     emptyState
                 } else {
@@ -709,7 +709,7 @@ private struct SettingsView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                TangiPalette.softBackground.ignoresSafeArea()
+                Color.clear.ignoresSafeArea()
                 List {
                     Section {
                         HStack(spacing: 13) {
@@ -780,7 +780,7 @@ private struct SettingsView: View {
                     }
 
                     Section("ABOUT") {
-                        LabeledContent("Version", value: "0.2.0")
+                        LabeledContent("Version", value: Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.2.0")
                             .listRowBackground(TangiPalette.card.opacity(0.92))
                         Link(destination: URL(string: "https://github.com/TangiDev69/TangiExtract")!) {
                             Label("GitHub project", systemImage: "chevron.left.forwardslash.chevron.right")
