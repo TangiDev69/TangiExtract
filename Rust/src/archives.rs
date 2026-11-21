@@ -102,7 +102,7 @@ pub unsafe extern "C" fn tangiextract_tar_extract(input: *const c_char, output: 
     if input.is_null() || output.is_null() { write_error(error, cap, "Invalid input or output path."); return 1; }
     let i = unsafe { CStr::from_ptr(input) }.to_string_lossy();
     let o = unsafe { CStr::from_ptr(output) }.to_string_lossy();
-    match extract_tar(Path::new(i.as_ref()), Path::new(o.as_ref()), gzip != 0) {
+    match extract_tar(Path::new(i.as_ref()), Path::new(o.as_ref()), compression) {
         Ok(()) => 0,
         Err(e) => { write_error(error, cap, &e); 1 }
     }
