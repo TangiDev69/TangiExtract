@@ -1,0 +1,105 @@
+name: Build TangiExtract iOS IPA
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "App/**"
+      - "Rust/**"
+      - "project.yml"
+      - ".github/workflows/build-ios.yml"
+      - ".gitignore"
+      - "README.md"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tangiextract-ios-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Test Rust and build unsigned iOS IPA
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Install Rust iOS target
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup target add aarch64-apple-ios
+          rustc --version
+          cargo --version
+          xcodebuild -version
+
+      - name: Test native extraction crate
+        working-directory: Rust
+        run: cargo test --locked
+
+      - name: Build Rust static library for iOS ARM64
+        working-directory: Rust
+        run: cargo build --release --target aarch64-apple-ios --locked
+
+      - name: Verify Rust static library
+        run: |
+          test -s Rust/target/aarch64-apple-ios/release/libtangiextract.a
+          file Rust/target/aarch64-apple-ios/release/libtangiextract.a
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        run: xcodegen generate --spec project.yml
+
+      - name: Build unsigned iOS application
+        run: |
+          set -euo pipefail
+          xcodebuild \
+            -project TangiExtract.xcodeproj \
+            -scheme TangiExtract \
+            -configuration Release \
+            -destination "generic/platform=iOS" \
+            -derivedDataPath "$PWD/build/DerivedData" \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+      - name: Package IPA
+        run: |
+          set -euo pipefail
+          APP_PATH="build/DerivedData/Build/Products/Release-iphoneos/TangiExtract.app"
+          test -d "$APP_PATH"
+          /usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$APP_PATH/Info.plist" | grep -Fx "com.tangidev.tangiextract"
+          /usr/libexec/PlistBuddy -c "Print :CFBundleDisplayName" "$APP_PATH/Info.plist" | grep -Fx "TangiExtract"
+          /usr/libexec/PlistBuddy -c "Print :UIFileSharingEnabled" "$APP_PATH/Info.plist" | grep -Fx "true"
+          /usr/libexec/PlistBuddy -c "Print :LSSupportsOpeningDocumentsInPlace" "$APP_PATH/Info.plist" | grep -Fx "true"
+          mkdir -p build/ipa/Payload
+          ditto "$APP_PATH" build/ipa/Payload/TangiExtract.app
+          (cd build/ipa && ditto -c -k --sequesterRsrc --keepParent Payload "$GITHUB_WORKSPACE/TangiExtract.ipa")
+          test -s TangiExtract.ipa
+          unzip -l TangiExtract.ipa | grep -F "Payload/TangiExtract.app/Info.plist"
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: TangiExtract-unsigned-IPA
+          path: TangiExtract.ipa
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publish development release
+        if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: tangiextract-build-${{ github.run_number }}-${{ github.run_attempt }}
+          name: TangiExtract development build ${{ github.run_number }}
+          prerelease: true
+          generate_release_notes: false
+          body: |
+            Automated unsigned development IPA.
+            This is an early development build with NSIS installer support only.
+            It is not a production release.
+          files: TangiExtract.ipa
