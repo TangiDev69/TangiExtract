@@ -161,6 +161,10 @@ pub fn extract_7z(input: &Path, output: &Path) -> Result<(), String> {
 }
 
 
+// UnRAR license restriction: UnRAR source code may be used in software to handle
+// RAR archives without limitations free of charge, but cannot be used to develop
+// a RAR (WinRAR) compatible archiver or to re-create the proprietary RAR
+// compression algorithm. See NOTICE for the full UnRAR license text.
 pub fn extract_rar(input: &Path, output: &Path) -> Result<(), String> {
     let meta = fs::metadata(input).map_err(|e| format!("Cannot read RAR: {e}"))?;
     if meta.len() == 0 || meta.len() > MAX_INPUT {
