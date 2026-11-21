@@ -27,7 +27,7 @@ enum ExtractionServiceError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .unsupportedFormat:
-            return "Supported formats are ZIP archives and NSIS-based Windows installers (.exe)."
+            return "Supported formats are ZIP, TAR, TAR.GZ archives and NSIS-based Windows installers (.exe)."
         case .cannotCreateStorage:
             return "TangiExtract could not prepare its temporary extraction folder."
         case .extractionFailed(let detail):
