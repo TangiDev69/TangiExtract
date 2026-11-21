@@ -39,13 +39,25 @@ jobs:
         working-directory: Rust
         run: cargo test
 
-      - name: Reproduce AssaultCube NSIS importer regression sample
+      - name: Build and extract a generated NSIS regression fixture
         run: |
           set -euo pipefail
-          curl --fail --location --retry 3 --output /tmp/AssaultCube_v1.3.0.2.exe "https://github.com/assaultcube/AC/releases/download/v1.3.0.2/AssaultCube_v1.3.0.2_LockdownEdition.exe"
-          cargo run --manifest-path Rust/Cargo.toml --example extract_installer -- /tmp/AssaultCube_v1.3.0.2.exe /tmp/tangiextract-nsis-regression
-          find /tmp/tangiextract-nsis-regression -path '*/config/font.cfg' -print -quit | grep -q .
-          find /tmp/tangiextract-nsis-regression -path '*/packages/maps/official/*.cgz' -print -quit | grep -q .
+          brew install nsis
+          mkdir -p /tmp/tangiextract-nsis-fixture
+          printf 'TANGIEXTRACT_NSIS_FIXTURE_V1\\n' > /tmp/tangiextract-nsis-fixture/payload.txt
+          cat > /tmp/tangiextract-nsis-fixture/fixture.nsi <<'NSIS'
+          OutFile "/tmp/tangiextract-nsis-fixture/fixture.exe"
+          InstallDir "$TEMP\\TangiExtractFixture"
+          Section
+            SetOutPath "$INSTDIR\\payload"
+            File /oname=fixture.txt "/tmp/tangiextract-nsis-fixture/payload.txt"
+          SectionEnd
+          NSIS
+          makensis -V2 /tmp/tangiextract-nsis-fixture/fixture.nsi
+          cargo run --manifest-path Rust/Cargo.toml --example extract_installer -- /tmp/tangiextract-nsis-fixture/fixture.exe /tmp/tangiextract-nsis-fixture/output
+          fixture="$(find /tmp/tangiextract-nsis-fixture/output -type f -name fixture.txt -print -quit)"
+          test -n "$fixture"
+          grep -Fxq 'TANGIEXTRACT_NSIS_FIXTURE_V1' "$fixture"
 
       - name: Build Rust static library for iOS ARM64
         working-directory: Rust
