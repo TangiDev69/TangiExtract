@@ -9,8 +9,10 @@ private enum TangiPalette {
     static let pink = Color(red: 1.00, green: 0.72, blue: 0.82)
     static let peach = Color(red: 1.00, green: 0.82, blue: 0.68)
     static let mint = Color(red: 0.65, green: 0.86, blue: 0.78)
-    static let ink = Color(red: 0.24, green: 0.21, blue: 0.32)
-    static let softBackground = Color(red: 0.97, green: 0.95, blue: 1.00)
+    static let ink = Color(uiColor: .label)
+    static let softBackground = Color(uiColor: .systemGroupedBackground)
+    static let card = Color(uiColor: .secondarySystemGroupedBackground)
+    static let subtleCard = Color(uiColor: .tertiarySystemGroupedBackground)
 }
 
 struct ContentView: View {
@@ -270,12 +272,9 @@ private struct HomeView: View {
 
     private var formatSection: some View {
         VStack(alignment: .leading, spacing: 11) {
-            sectionHeading("What can it unpack?", trailing: "MORE SOON")
+            sectionHeading("Supported formats", trailing: "CURRENT BUILD")
             HStack(spacing: 10) {
                 formatChip("EXE", name: "NSIS", active: true)
-                formatChip("ZIP", name: "Coming soon", active: false)
-                formatChip("7Z", name: "Coming soon", active: false)
-                formatChip("RAR", name: "Coming soon", active: false)
             }
         }
     }
@@ -287,7 +286,7 @@ private struct HomeView: View {
                 .foregroundStyle(active ? TangiPalette.deepLavender : .secondary)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 11)
-                .background(active ? TangiPalette.lavender.opacity(0.15) : Color.white.opacity(0.65),
+                .background(active ? TangiPalette.lavender.opacity(0.15) : TangiPalette.subtleCard.opacity(0.92),
                             in: RoundedRectangle(cornerRadius: 13))
             Text(name)
                 .font(.system(size: 9, weight: .semibold, design: .rounded))
@@ -386,33 +385,43 @@ private struct DreamyBackground: View {
             ZStack {
                 LinearGradient(
                     colors: [
-                        Color(red: 0.96, green: 0.94, blue: 1.0),
-                        Color(red: 1.0, green: 0.95, blue: 0.97),
-                        Color(red: 0.92, green: 0.95, blue: 1.0)
+                        Color(uiColor: .systemBackground),
+                        Color(uiColor: .secondarySystemBackground),
+                        Color(uiColor: .systemBackground)
                     ],
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 )
-                Circle()
-                    .fill(TangiPalette.pink.opacity(0.25))
-                    .frame(width: 210, height: 210)
-                    .blur(radius: 45)
-                    .position(x: proxy.size.width * 0.94, y: 160 + (animate ? 12 : -12))
-                Circle()
-                    .fill(TangiPalette.lavender.opacity(0.19))
-                    .frame(width: 230, height: 230)
-                    .blur(radius: 48)
-                    .position(x: 0, y: proxy.size.height * 0.72 + (animate ? -10 : 10))
-                Circle()
-                    .fill(TangiPalette.peach.opacity(0.17))
-                    .frame(width: 150, height: 150)
-                    .blur(radius: 38)
-                    .position(x: proxy.size.width * 0.8, y: proxy.size.height * 0.92)
+                FloatingSticker(symbol: "🍓", x: proxy.size.width * 0.88, y: proxy.size.height * 0.22, size: 27, phase: animate)
+                FloatingSticker(symbol: "🍊", x: proxy.size.width * 0.10, y: proxy.size.height * 0.55, size: 23, phase: !animate)
+                FloatingSticker(symbol: "📁", x: proxy.size.width * 0.91, y: proxy.size.height * 0.70, size: 22, phase: !animate)
+                FloatingSticker(symbol: "🍒", x: proxy.size.width * 0.20, y: proxy.size.height * 0.88, size: 25, phase: animate)
+                FloatingSticker(symbol: "📄", x: proxy.size.width * 0.72, y: proxy.size.height * 0.43, size: 18, phase: animate)
             }
             .ignoresSafeArea()
             .animation(.easeInOut(duration: 7).repeatForever(autoreverses: true), value: animate)
         }
         .ignoresSafeArea()
+    }
+}
+
+private struct FloatingSticker: View {
+    let symbol: String
+    let x: CGFloat
+    let y: CGFloat
+    let size: CGFloat
+    let phase: Bool
+    @State private var isPopped = false
+    var body: some View {
+        Text(symbol)
+            .font(.system(size: isPopped ? size * 1.35 : size))
+            .rotationEffect(.degrees(isPopped ? 14 : -9))
+            .position(x: x, y: y + (phase ? -7 : 7))
+            .animation(.easeInOut(duration: 3.8).repeatForever(autoreverses: true), value: phase)
+            .animation(.spring(response: 0.28, dampingFraction: 0.48), value: isPopped)
+            .contentShape(Rectangle())
+            .onTapGesture { isPopped.toggle() }
+            .accessibilityLabel("Decorative sticker")
     }
 }
 
@@ -487,7 +496,7 @@ private struct FileBrowserView: View {
                                     } label: {
                                         fileRow(item)
                                     }
-                                    .listRowBackground(Color.white.opacity(0.75))
+                                    .listRowBackground(TangiPalette.card.opacity(0.90))
                                 } else {
                                     Button {
                                         previewURL = item.url
@@ -495,7 +504,7 @@ private struct FileBrowserView: View {
                                         fileRow(item)
                                     }
                                     .buttonStyle(.plain)
-                                    .listRowBackground(Color.white.opacity(0.75))
+                                    .listRowBackground(TangiPalette.card.opacity(0.90))
                                     .contextMenu {
                                         ShareLink(item: item.url) {
                                             Label("Share", systemImage: "square.and.arrow.up")
@@ -723,7 +732,7 @@ private struct SettingsView: View {
                             }
                         }
                         .padding(.vertical, 7)
-                        .listRowBackground(Color.white.opacity(0.8))
+                        .listRowBackground(TangiPalette.card.opacity(0.92))
                     }
 
                     Section("PERSONALIZE") {
@@ -734,7 +743,7 @@ private struct SettingsView: View {
                         } label: {
                             Label("Appearance", systemImage: "circle.lefthalf.filled")
                         }
-                        .listRowBackground(Color.white.opacity(0.8))
+                        .listRowBackground(TangiPalette.card.opacity(0.92))
                     }
 
                     Section("EXTRACTION") {
@@ -742,13 +751,13 @@ private struct SettingsView: View {
                             Label("Open files after extraction", systemImage: "folder.badge.plus")
                         }
                         .tint(TangiPalette.lavender)
-                        .listRowBackground(Color.white.opacity(0.8))
+                        .listRowBackground(TangiPalette.card.opacity(0.92))
 
                         Toggle(isOn: $hapticsEnabled) {
                             Label("Haptic feedback", systemImage: "hand.tap")
                         }
                         .tint(TangiPalette.lavender)
-                        .listRowBackground(Color.white.opacity(0.8))
+                        .listRowBackground(TangiPalette.card.opacity(0.92))
 
                         LabeledContent {
                             Text("On this device")
@@ -756,7 +765,7 @@ private struct SettingsView: View {
                         } label: {
                             Label("Processing", systemImage: "iphone")
                         }
-                        .listRowBackground(Color.white.opacity(0.8))
+                        .listRowBackground(TangiPalette.card.opacity(0.92))
                     }
 
                     Section("STORAGE") {
@@ -766,7 +775,7 @@ private struct SettingsView: View {
                         } label: {
                             Label("Output folder", systemImage: "folder")
                         }
-                        .listRowBackground(Color.white.opacity(0.8))
+                        .listRowBackground(TangiPalette.card.opacity(0.92))
 
                         LabeledContent {
                             Text("Temporary files are cleaned after each job")
@@ -776,16 +785,16 @@ private struct SettingsView: View {
                         } label: {
                             Label("Temporary data", systemImage: "trash")
                         }
-                        .listRowBackground(Color.white.opacity(0.8))
+                        .listRowBackground(TangiPalette.card.opacity(0.92))
                     }
 
                     Section("ABOUT") {
                         LabeledContent("Version", value: "0.2.0")
-                            .listRowBackground(Color.white.opacity(0.8))
+                            .listRowBackground(TangiPalette.card.opacity(0.92))
                         Link(destination: URL(string: "https://github.com/TangiDev69/TangiExtract")!) {
                             Label("GitHub project", systemImage: "chevron.left.forwardslash.chevron.right")
                         }
-                        .listRowBackground(Color.white.opacity(0.8))
+                        .listRowBackground(TangiPalette.card.opacity(0.92))
                     }
                 }
                 .scrollContentBackground(.hidden)
