@@ -29,9 +29,7 @@ struct ContentView: View {
     }
 
     var body: some View {
-        ZStack {
-            DreamyBackground(animate: true)
-            TabView(selection: $selectedTab) {
+        TabView(selection: $selectedTab) {
             HomeView(onOpenFiles: { selectedTab = 1 }) {
                 if openFilesAfterExtraction { selectedTab = 1 }
             }
@@ -47,8 +45,7 @@ struct ContentView: View {
                 .tag(2)
         }
             .tint(TangiPalette.deepLavender)
-            .preferredColorScheme(preferredScheme)
-        }
+        .preferredColorScheme(preferredScheme)
     }
 }
 
@@ -69,6 +66,7 @@ private struct HomeView: View {
     var body: some View {
         NavigationStack {
             ZStack {
+                DreamyBackground(animate: true)
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 22) {
                         topBar
@@ -478,7 +476,7 @@ private struct FileBrowserView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.clear.ignoresSafeArea()
+                DreamyBackground(animate: true)
                 if items.isEmpty {
                     emptyState
                 } else {
@@ -713,7 +711,7 @@ private struct SettingsView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.clear.ignoresSafeArea()
+                DreamyBackground(animate: true)
                 List {
                     Section {
                         HStack(spacing: 13) {
