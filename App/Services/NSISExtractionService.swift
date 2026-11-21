@@ -90,9 +90,20 @@ enum NSISExtractionService {
                 isDirectory: true
             )
 
+            // Preserve the original installer in Documents/Imports.
+            let importedCopy = imports.appendingPathComponent(
+                "\(baseName.isEmpty ? "Installer" : baseName)-\(UUID().uuidString.prefix(8)).exe"
+            )
+            try fileManager.copyItem(at: inputCopy, to: importedCopy)
+
             // The native engine writes only into a unique temporary directory.
             // Publish the completed result with a same-volume directory move.
-            try fileManager.moveItem(at: outputDirectory, to: destination)
+            do {
+                try fileManager.moveItem(at: outputDirectory, to: destination)
+            } catch {
+                try? fileManager.removeItem(at: importedCopy)
+                throw error
+            }
             return destination
         } catch let error as ExtractionServiceError {
             throw error
