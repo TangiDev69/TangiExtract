@@ -2,66 +2,78 @@
 
 **Everything inside. Nothing left behind.**
 
-TangiExtract is a lightweight, on-device iOS extractor and file browser for supported installers, archives, and game data.
+TangiExtract is a lightweight, on-device iOS archive and installer extractor with a built-in file browser. It is designed for importing game files, unpacking archives, and inspecting supported Windows installers—without sending files to a server.
 
-## Current development status
+## Features
 
-- [x] Native extraction of ZIP archives with traversal, symlink, and expansion-limit checks
-- [x] Native extraction of TAR and TAR.GZ archives with path and entry-type checks
-- [x] Native 7Z extraction with path and output-size checks
-- [x] Standalone GZ, BZ2, XZ, Zstandard, and LZ4 stream decompression with output-size limits
-- [x] TAR.GZ, TAR.BZ2, TAR.XZ, TAR.ZST, and TAR.LZ4 support
-- [x] Native extraction of supported NSIS-based Windows `.exe` installers
-- [x] Direct extraction from the selected source URL without keeping a duplicate copy
-- [x] Temporary job directories with cleanup after extraction
-- [x] Pastel SwiftUI home screen, My Files browser, and Settings
-- [x] Search, sort, Quick Look preview, share, rename, and delete for extracted files
-- [x] Appearance preference and post-extraction navigation setting
-- [x] Generated app icon and iOS ARM64 GitHub Actions build
-- [x] Automated NSIS extraction regression test
-- [ ] RAR support (pending a safe iOS-compatible integration)
-- [ ] File signature detection and archive preview
-- [ ] Batch extraction, persistent extraction history, progress, and cancellation
-- [ ] Additional installer formats, including Inno Setup and MSI
+- Extract supported archives and compression streams locally on iPhone or iPad.
+- Parse supported NSIS Windows installers (`.exe`) as data; Windows programs are never executed.
+- Keep the original source file in its original location.
+- Browse extracted content in the in-app **My Files** browser.
+- Search, sort, preview with Quick Look, share, rename, and delete extracted items.
+- Light, dark, and system appearance settings.
+- Clean up temporary working files after each extraction.
 
-**Device testing status:** NSIS-compatible EXE extraction has been tested successfully on-device. No other format has been tested on-device yet; ZIP, 7Z, TAR, compressed TAR, and standalone compression support are implemented but remain unverified on the user's device.
+## Supported formats
 
-**Format support:** A recognized file type is not necessarily an extractable file type. Unsupported formats are reported instead of being treated as extractable. Windows installers are parsed as data; TangiExtract never executes Windows programs.
+| Format | Extensions | Status |
+|---|---|---|
+| ZIP | `.zip` | Implemented |
+| 7-Zip | `.7z` | Implemented |
+| TAR | `.tar` | Implemented |
+| TAR + Gzip | `.tar.gz`, `.tgz` | Implemented |
+| TAR + Bzip2 | `.tar.bz2`, `.tbz2` | Implemented |
+| TAR + XZ | `.tar.xz`, `.txz` | Implemented |
+| TAR + Zstandard | `.tar.zst` | Implemented |
+| TAR + LZ4 | `.tar.lz4` | Implemented |
+| Gzip | `.gz` | Implemented |
+| Bzip2 | `.bz2` | Implemented |
+| XZ | `.xz` | Implemented |
+| Zstandard | `.zst` | Implemented |
+| LZ4 | `.lz4` | Implemented |
+| NSIS installers | compatible `.exe` | Implemented |
+| RAR | `.rar` | Planned / under investigation |
+| Other installer formats | MSI, Inno Setup, etc. | Planned |
 
-## Storage behavior
+**Device testing:** NSIS-compatible EXE extraction has been confirmed working on the developer's device. Other currently implemented formats have not yet been individually verified on a physical device. CI/build checks do not replace device testing.
 
-The selected source file is read directly from its original location using iOS file access permissions. TangiExtract does **not** copy it into its own storage or retain a second copy.
+A file extension alone does not guarantee support. EXE is a generic executable container; only supported NSIS installer files are handled. Unsupported or malformed files should return an error instead of being launched.
 
-Completed output is saved in:
+## How to use
 
-`Files → On My iPhone → TangiExtract → Extracted`
+1. Tap **Choose a file to extract** and pick the file from the iOS Files picker.
+2. If choosing a file appears to do nothing, open it in Files, press and hold the file, tap **Share**, and choose **TangiExtract**. If using TangiExtract inside LiveContainer, share the file to LiveContainer first, then select TangiExtract from the LiveContainer app list.
+3. When extraction completes, open **My Files** to browse the output.
 
-A short-lived working directory is created in the app's temporary cache area while extraction runs and is removed when the job finishes. It is not exposed in the Files app. The original source remains untouched.
+## Privacy and storage
 
-## Latest development build
+- Extraction is performed on-device; files are not uploaded to a service.
+- The source is accessed directly through iOS file permissions and is not copied into TangiExtract's private storage.
+- Finished output is stored under **Files → On My iPhone → TangiExtract → Extracted**.
+- Temporary working files are created for each extraction and removed after the operation.
 
-- [Download the latest unsigned development IPA](https://github.com/TangiDev69/TangiExtract/releases/latest)
-- [View GitHub Actions builds](https://github.com/TangiDev69/TangiExtract/actions)
+## Downloads
 
-**Current compatibility:** `.zip`, `.7z`, `.tar`, `.tar.gz` / `.tgz`, `.tar.bz2` / `.tbz2`, `.tar.xz` / `.txz`, `.tar.zst`, `.tar.lz4`, standalone `.gz`, `.bz2`, `.xz`, `.zst`, and `.lz4` archives and selected Windows `.exe` files that are valid NSIS installers. `.exe` is a generic executable container, not a single archive format; only NSIS-compatible installers are supported at present. RAR archives, ordinary applications, Inno Setup installers, MSI packages, and arbitrary EXE files are not currently supported. TangiExtract parses supported installers as data and never launches them. Physical-device installation and runtime testing are separate from CI build checks.
+- **[Latest release / IPA](https://github.com/TangiDev69/TangiExtract/releases/latest)** — the latest GitHub release
+- **[Build history](https://github.com/TangiDev69/TangiExtract/actions)** — automated builds and CI results
+
+The IPA is unsigned and is intended for compatible sideloading tools such as SideStore, AltStore, and LiveContainer. Installation behavior varies by tool and device.
+
+## Project status and roadmap
+
+The project is actively developed. Current priorities are expanding archive-format coverage (starting with RAR), improving import/share workflows, and adding stronger automated fixtures for format-level regression tests. Additional potential formats include CAB, CPIO, AR, ISO/IMG, and more installer families; these will only be listed as supported after implementation and testing.
 
 ## Architecture
 
-- **SwiftUI:** user interface, file browser, document access, and settings.
-- **Swift services:** secure-scoped source access, temporary storage, and native-engine integration.
-- **Rust:** format-specific extraction engines and parsers.
-- **GitHub Actions:** automated Rust tests, iOS ARM64 compilation, unsigned IPA packaging.
+- **SwiftUI:** UI, document picker, file browser, settings, and iOS file access.
+- **Swift services:** temporary output management and bridge to extraction engines.
+- **Rust:** native parsing/extraction libraries.
+- **GitHub Actions:** Rust tests, iOS ARM64 compilation, and unsigned IPA packaging.
 
-## Build
+## Security notes
 
-GitHub Actions builds the app on macOS. The workflow tests the Rust crate, builds a generated NSIS fixture, compiles the Rust static library for `aarch64-apple-ios`, generates the app icon, creates the Xcode project with XcodeGen, builds without code signing, and packages an IPA.
+Extraction is subject to resource limits and path validation. ZIP extraction rejects unsafe paths and symbolic links; TAR extraction rejects unsafe paths, links, and special entries. RAR and additional formats are not supported yet. This project is still evolving and should not be treated as a hardened universal archive-extraction suite. Be cautious with untrusted archives.
 
-Unsigned IPA output is intended for compatible sideloading workflows. It is not an App Store-signed application.
+## License and third-party notices
 
-## Security and limitations
-
-The NSIS parser reads installer data into memory. ZIP extraction rejects unsafe paths and symbolic links and enforces per-entry and total expansion limits. TAR extraction rejects unsafe paths and links or special entries. These engines are still evolving and are not a hardened universal extraction suite. Large or unusual installers may exceed device memory limits.
-
-## License
-
-See [NOTICE](NOTICE) and [LICENSE](LICENSE) for attribution and licensing information. Third-party dependencies retain their respective licenses.
+See [LICENSE](LICENSE) and [NOTICE](NOTICE). Third-party dependencies retain their respective licenses.
