@@ -161,6 +161,64 @@ pub fn extract_7z(input: &Path, output: &Path) -> Result<(), String> {
 }
 
 
+
+pub fn extract_cab(input: &Path, output: &Path) -> Result<(), String> {
+    let meta = fs::metadata(input).map_err(|e| format!("Cannot read CAB: {e}"))?;
+    if meta.len() == 0 || meta.len() > MAX_INPUT {
+        return Err("CAB archive is empty or exceeds the 1 GB input limit.".into());
+    }
+    let file = File::open(input).map_err(|e| format!("Cannot open CAB: {e}"))?;
+    let mut cabinet = cab::Cabinet::new(file).map_err(|e| format!("Invalid CAB archive: {e}"))?;
+    fs::create_dir_all(output).map_err(|e| format!("Cannot create output folder: {e}"))?;
+    let mut names = Vec::new();
+    let mut seen = HashSet::new();
+    let mut declared_total = 0u64;
+    for folder in cabinet.folder_entries() {
+        for entry in folder.file_entries() {
+            let name = entry.name().to_string();
+            let relative = safe_relative(&name, "CAB")?;
+            if !seen.insert(relative.clone()) {
+                return Err(format!("Duplicate CAB destination rejected: {}", relative.display()));
+            }
+            let size = u64::from(entry.uncompressed_size());
+            if size > MAX_ENTRY || declared_total > MAX_OUTPUT.saturating_sub(size) {
+                return Err("Expanded CAB data exceeds the configured safety limit.".into());
+            }
+            declared_total = declared_total.checked_add(size).ok_or("CAB size counter overflow.")?;
+            names.push((name, relative, size));
+            if names.len() > MAX_FILES {
+                return Err("CAB archive contains too many entries.".into());
+            }
+        }
+    }
+    let mut total = 0u64;
+    for (name, relative, declared) in names {
+        let destination = output.join(&relative);
+        if let Some(parent) = destination.parent() {
+            fs::create_dir_all(parent).map_err(|e| format!("Cannot create CAB folder: {e}"))?;
+        }
+        let mut reader = cabinet.read_file(&name).map_err(|e| format!("Cannot read CAB entry {name}: {e}"))?;
+        let mut out = File::create(&destination).map_err(|e| format!("Cannot create CAB file: {e}"))?;
+        let copied = io::copy(&mut reader, &mut out).map_err(|e| format!("Cannot extract CAB entry {name}: {e}"))?;
+        if copied != declared || copied > MAX_ENTRY || total > MAX_OUTPUT.saturating_sub(copied) {
+            return Err(format!("CAB entry size mismatch or extraction limit exceeded: {name}"));
+        }
+        total = total.checked_add(copied).ok_or("CAB size counter overflow.")?;
+    }
+    Ok(())
+}
+
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn tangiextract_cab_extract(input: *const c_char, output: *const c_char, error: *mut c_char, cap: usize) -> i32 {
+    if input.is_null() || output.is_null() { write_error(error, cap, "Invalid input or output path."); return 1; }
+    let i = unsafe { CStr::from_ptr(input) }.to_string_lossy();
+    let o = unsafe { CStr::from_ptr(output) }.to_string_lossy();
+    match extract_cab(Path::new(i.as_ref()), Path::new(o.as_ref())) {
+        Ok(()) => 0,
+        Err(e) => { write_error(error, cap, &e); 1 }
+    }
+}
+
 // UnRAR license restriction: UnRAR source code may be used in software to handle
 // RAR archives without limitations free of charge, but cannot be used to develop
 // a RAR (WinRAR) compatible archiver or to re-create the proprietary RAR
