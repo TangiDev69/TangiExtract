@@ -176,6 +176,7 @@ pub fn extract_rar(input: &Path, output: &Path) -> Result<(), String> {
         .map_err(|e| format!("Cannot open RAR archive: {e}"))?;
     let mut count = 0usize;
     let mut total = 0u64;
+    let mut seen = HashSet::new();
 
     loop {
         let next = archive.read_header().map_err(|e| format!("Cannot read RAR header: {e}"))?;
