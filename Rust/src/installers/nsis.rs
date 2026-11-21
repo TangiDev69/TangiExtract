@@ -63,18 +63,8 @@ pub fn extract_installer(input: &Path, output: &Path) -> Result<(), String> {
         {
             return Err(format!("Unsafe installer path rejected: {relative}"));
         }
-        let ext = rel_path
-            .extension()
-            .and_then(|v| v.to_str())
-            .unwrap_or("")
-            .to_ascii_lowercase();
-        if matches!(
-            ext.as_str(),
-            "exe" | "dll" | "sys" | "ocx" | "bat" | "cmd" | "com" | "scr" | "msi" | "lnk"
-                | "url" | "reg"
-        ) {
-            continue;
-        }
+        // Extract payload files regardless of extension. Files are written as data only;
+        // TangiExtract never executes EXE, DLL, script, or installer contents.
         if !seen.insert(rel_path.to_path_buf()) {
             return Err(format!("Duplicate installer destination rejected: {relative}"));
         }
