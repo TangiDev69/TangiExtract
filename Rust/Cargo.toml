@@ -23,3 +23,6 @@ zstd = "0.13"
 lz4_flex = { version = "0.11", features = ["frame"] }
 unrar = "0.5.8"
 cab = "0.6"
+# Additional pure-Rust archive, disk-image, document and installer readers.
+# The no-emulator feature set deliberately avoids executing packed PE stubs.
+exav-unpack = { version = "0.0.3", default-features = false, features = ["all-formats-no-emu"] }
