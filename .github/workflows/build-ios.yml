@@ -9,6 +9,7 @@ on:
       - "Scripts/**"
       - "Rust/**"
       - "project.yml"
+      - "README.md"
       - ".github/workflows/build-ios.yml"
       - ".gitignore"
 
