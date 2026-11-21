@@ -34,7 +34,7 @@ TangiExtract is a lightweight, on-device iOS archive and installer extractor wit
 | CAB | `.cab` | Implemented |
 | Other installer formats | MSI, Inno Setup, etc. | Not supported |
 
-**Device testing:** NSIS-compatible EXE extraction has been confirmed working on the developer's device. RAR and CAB support are implemented in the code and CI build, but neither has been confirmed on a physical device. Other archive formats also remain unverified on-device. CI/build checks do not replace device testing.
+**Device testing:** NSIS-compatible EXE extraction has been confirmed working on the developer's device. RAR and CAB support are implemented in the code and CI build, but neither has been confirmed on a physical device. CAB cabinet sets spanning multiple files are not supported. Other archive formats also remain unverified on-device. CI/build checks do not replace device testing.
 
 A file extension alone does not guarantee support. EXE is a generic executable container; only supported NSIS installer files are handled. Unsupported or malformed files should return an error instead of being launched.
 
@@ -67,7 +67,7 @@ The IPA is unsigned and is intended for compatible sideloading tools such as Sid
 
 ## Security notes
 
-Extraction is subject to resource limits and path validation. ZIP extraction rejects unsafe paths and symbolic links; TAR extraction rejects unsafe paths, links, and special entries. RAR extraction is currently limited to single-volume, unencrypted archives; password-protected and multipart archives are not supported. CAB decoding is handled by the native CAB library. CPIO, AR, ISO/IMG, and additional installer families are not supported yet. This extractor is still evolving; be cautious with untrusted archives.
+Extraction is subject to resource limits and path validation. ZIP extraction rejects unsafe paths and symbolic links; TAR extraction rejects unsafe paths, links, and special entries. RAR extraction is currently limited to single-volume, unencrypted archives; password-protected and multipart archives are not supported. CAB decoding is handled by the native CAB library; cabinet sets spanning multiple files are not supported. CPIO, AR, ISO/IMG, and additional installer families are not supported yet. This extractor is still evolving; be cautious with untrusted archives.
 
 ## License and third-party notices
 
