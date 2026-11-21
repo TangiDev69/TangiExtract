@@ -135,7 +135,7 @@ private struct HomeView: View {
                     .foregroundStyle(TangiPalette.pink)
             }
 
-            Text("A little space\\nfor all your files.")
+            Text("A little space\nfor all your files.")
                 .font(.system(size: 31, weight: .bold, design: .rounded))
                 .tracking(-0.8)
                 .foregroundStyle(TangiPalette.ink)
