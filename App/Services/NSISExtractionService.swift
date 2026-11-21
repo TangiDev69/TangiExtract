@@ -1,7 +1,7 @@
 import Foundation
 
-@_silgen_name("ac_nsis_extract")
-private func ac_nsis_extract(
+@_silgen_name("tangiextract_nsis_extract")
+private func tangiextract_nsis_extract(
     _ inputPath: UnsafePointer<CChar>,
     _ outputPath: UnsafePointer<CChar>,
     _ errorBuffer: UnsafeMutablePointer<CChar>,
@@ -70,7 +70,7 @@ enum NSISExtractionService {
             let status = inputCopy.path.withCString { inputPath in
                 outputDirectory.path.withCString { outputPath in
                     errorBuffer.withUnsafeMutableBufferPointer { buffer in
-                        ac_nsis_extract(inputPath, outputPath, buffer.baseAddress!, buffer.count)
+                        tangiextract_nsis_extract(inputPath, outputPath, buffer.baseAddress!, buffer.count)
                     }
                 }
             }
