@@ -1,6 +1,7 @@
 import SwiftUI
 import UniformTypeIdentifiers
 import QuickLook
+import UIKit
 
 private enum TangiPalette {
     static let lavender = Color(red: 0.57, green: 0.43, blue: 0.88)
@@ -327,6 +328,9 @@ for all your files.")
                     }.value
                     recentFolder = destination
                     recentFileName = url.lastPathComponent
+                    if UserDefaults.standard.bool(forKey: "tangi.haptics") {
+                        UINotificationFeedbackGenerator().notificationOccurred(.success)
+                    }
                     onExtractionCompleted()
                 } catch {
                     errorMessage = error.localizedDescription
