@@ -143,6 +143,6 @@ jobs:
           generate_release_notes: false
           body: |
             Automated unsigned development IPA.
-            This is an early development build with NSIS installer support only.
+            Current formats: ZIP archives and NSIS-compatible Windows EXE installers. Other EXE installer families and archive formats are not yet supported.
             It is not a production release.
           files: TangiExtract.ipa
