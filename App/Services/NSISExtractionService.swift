@@ -102,6 +102,8 @@ enum ExtractionService {
                             return tangiextract_zip_extract(inputPath, outputPath, buffer.baseAddress!, buffer.count)
                         } else if is7z {
                             return tangiextract_7z_extract(inputPath, outputPath, buffer.baseAddress!, buffer.count)
+                        } else if isRar {
+                            return tangiextract_rar_extract(inputPath, outputPath, buffer.baseAddress!, buffer.count)
                         } else if streamKind != 0 && !isTarCompressed {
                             let outputFileName = sourceURL.deletingPathExtension().lastPathComponent
                             let outputFile = outputDirectory.appendingPathComponent(outputFileName)
