@@ -56,6 +56,8 @@ private struct HomeView: View {
     @State private var recentFolder: URL?
     @State private var recentFileName: String?
     @State private var animateGlow = false
+    @State private var showingHowItWorks = false
+    @AppStorage("tangi.haptics") private var hapticsEnabled = true
 
     var body: some View {
         NavigationStack {
@@ -82,6 +84,11 @@ private struct HomeView: View {
                 allowsMultipleSelection: false,
                 onCompletion: handleSelectedFile
             )
+            .sheet(isPresented: $showingHowItWorks) {
+                HowItWorksSheet()
+                    .presentationDetents([.medium])
+                    .presentationDragIndicator(.visible)
+            }
             .alert("Couldn't extract this file", isPresented: $showError) {
                 Button("Okay", role: .cancel) {}
             } message: {
@@ -201,7 +208,7 @@ for all your files.")
             }
             quickAction("How it works", subtitle: "Safe & on-device", icon: "heart.text.square.fill",
                         tint: Color(red: 0.91, green: 0.55, blue: 0.69)) {
-                showingFilePicker = true
+                showingHowItWorks = true
             }
         }
     }
@@ -328,7 +335,7 @@ for all your files.")
                     }.value
                     recentFolder = destination
                     recentFileName = url.lastPathComponent
-                    if UserDefaults.standard.bool(forKey: "tangi.haptics") {
+                    if hapticsEnabled {
                         UINotificationFeedbackGenerator().notificationOccurred(.success)
                     }
                     onExtractionCompleted()
@@ -339,6 +346,35 @@ for all your files.")
                 isExtracting = false
             }
         }
+    }
+}
+
+private struct HowItWorksSheet: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(spacing: 10) {
+                AppMark(size: 42)
+                Text("A tiny bit of magic")
+                    .font(.system(size: 20, weight: .bold, design: .rounded))
+                    .foregroundStyle(TangiPalette.ink)
+            }
+            Label("Choose a supported installer from Files.", systemImage: "doc.badge.plus")
+            Label("TangiExtract reads it directly. The source is never copied.", systemImage: "hand.raised.fill")
+            Label("Extracted contents are saved in My Files.", systemImage: "folder.fill")
+            Label("Windows programs are never executed.", systemImage: "shield.lefthalf.filled")
+            Spacer(minLength: 0)
+        }
+        .font(.system(size: 13, weight: .medium, design: .rounded))
+        .foregroundStyle(TangiPalette.ink.opacity(0.82))
+        .padding(24)
+        .padding(.top, 10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            LinearGradient(colors: [Color(red: 0.98, green: 0.95, blue: 1),
+                                    Color(red: 1, green: 0.95, blue: 0.97)],
+                           startPoint: .topLeading, endPoint: .bottomTrailing)
+                .ignoresSafeArea()
+        )
     }
 }
 
