@@ -141,11 +141,12 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: tangiextract-build-${{ github.run_number }}-${{ github.run_attempt }}
-          name: TangiExtract development build ${{ github.run_number }}
-          prerelease: true
+          name: TangiExtract release build ${{ github.run_number }}
+          prerelease: false
           generate_release_notes: false
           body: |
-            Automated unsigned development IPA.
-            Current formats: ZIP, 7Z, TAR, TAR.GZ / TGZ, TAR.BZ2 / TBZ2, TAR.XZ / TXZ, TAR.ZST, TAR.LZ4, standalone GZ, BZ2, XZ, ZST, LZ4 archives and NSIS-compatible Windows EXE installers. Only EXE extraction has been user-tested on-device; all other formats remain untested. RAR and other Windows installer families are not yet supported.
-            It is not a production release.
+            Automated unsigned iOS IPA release from the main branch.
+            Implemented formats: ZIP, 7Z, TAR, TAR.GZ / TGZ, TAR.BZ2 / TBZ2, TAR.XZ / TXZ, TAR.ZST, TAR.LZ4, standalone GZ, BZ2, XZ, ZST, LZ4, and supported NSIS-compatible EXE installers.
+            Only EXE extraction has been confirmed on-device by the developer. Other formats remain unverified on-device. RAR is planned and is not included in this build.
+            This is an unsigned sideloadable build, not an App Store release. The GitHub release is marked as the latest release for easier discovery.
           files: TangiExtract.ipa
