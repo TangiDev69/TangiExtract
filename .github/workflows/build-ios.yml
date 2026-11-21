@@ -96,12 +96,14 @@ jobs:
           APP_PATH="build/DerivedData/Build/Products/Release-iphoneos/TangiExtract.app"
           test -d "$APP_PATH"
           python3 - "$APP_PATH/Info.plist" <<'PY'
-          import plistlib, sys
+          import plistlib, sys, os
           from pathlib import Path
           path = Path(sys.argv[1])
           with path.open("rb") as stream:
               info = plistlib.load(stream)
           info["CFBundleDisplayName"] = "TangiExtract"
+info["CFBundleShortVersionString"] = "1.1.0"
+info["CFBundleVersion"] = os.environ.get("GITHUB_RUN_NUMBER", "1")
           info["CFBundleName"] = "TangiExtract"
           info["UIFileSharingEnabled"] = True
           info["LSSupportsOpeningDocumentsInPlace"] = True
@@ -143,6 +145,6 @@ jobs:
           generate_release_notes: false
           body: |
             Automated unsigned development IPA.
-            Current formats: ZIP archives and NSIS-compatible Windows EXE installers. Other EXE installer families and archive formats are not yet supported.
+            Current formats: ZIP, TAR, TAR.GZ / TGZ archives and NSIS-compatible Windows EXE installers. Other EXE installer families and archive formats are not yet supported.
             It is not a production release.
           files: TangiExtract.ipa
