@@ -50,6 +50,7 @@ struct ContentView: View {
 }
 
 private struct HomeView: View {
+    @Environment(\.colorScheme) private var colorScheme
     let onOpenFiles: () -> Void
     let onExtractionCompleted: () -> Void
     @State private var showingFilePicker = false
@@ -119,7 +120,7 @@ private struct HomeView: View {
                 .font(.system(size: 19, weight: .semibold))
                 .foregroundStyle(TangiPalette.lavender)
                 .padding(11)
-                .background(.white.opacity(0.72), in: Circle())
+                .background(TangiPalette.card, in: Circle())
         }
         .padding(.top, 8)
     }
@@ -184,11 +185,7 @@ private struct HomeView: View {
         .background {
             RoundedRectangle(cornerRadius: 28, style: .continuous)
                 .fill(
-                    LinearGradient(colors: [
-                        TangiPalette.card,
-                        Color(red: 1.0, green: 0.94, blue: 0.98),
-                        Color(red: 0.93, green: 0.91, blue: 1.0)
-                    ], startPoint: .topLeading, endPoint: .bottomTrailing)
+                    LinearGradient(colors: colorScheme == .dark ? [Color(uiColor: .secondarySystemBackground), Color(uiColor: .tertiarySystemBackground)] : [Color.white, Color(red: 1.0, green: 0.94, blue: 0.98), Color(red: 0.93, green: 0.91, blue: 1.0)], startPoint: .topLeading, endPoint: .bottomTrailing)
                 )
                 .overlay(alignment: .topTrailing) {
                     Circle()
@@ -235,7 +232,7 @@ private struct HomeView: View {
             }
             .padding(12)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(.white.opacity(0.82), in: RoundedRectangle(cornerRadius: 19, style: .continuous))
+            .background(TangiPalette.card, in: RoundedRectangle(cornerRadius: 19, style: .continuous))
         }
         .buttonStyle(.plain)
     }
@@ -266,7 +263,7 @@ private struct HomeView: View {
                 }
             }
             .padding(14)
-            .background(.white.opacity(0.78), in: RoundedRectangle(cornerRadius: 19, style: .continuous))
+            .background(TangiPalette.card, in: RoundedRectangle(cornerRadius: 19, style: .continuous))
         }
     }
 
@@ -753,16 +750,6 @@ private struct SettingsView: View {
                             Label("Haptic feedback", systemImage: "hand.tap")
                         }
                         .tint(TangiPalette.lavender)
-                        .listRowBackground(TangiPalette.card.opacity(0.92))
-
-                        Button {
-                            if hapticsEnabled {
-                                UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                            }
-                        } label: {
-                            Label("Test haptic feedback", systemImage: "waveform")
-                        }
-                        .disabled(!hapticsEnabled)
                         .listRowBackground(TangiPalette.card.opacity(0.92))
 
                         LabeledContent {
