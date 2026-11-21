@@ -103,8 +103,8 @@ jobs:
           with path.open("rb") as stream:
               info = plistlib.load(stream)
           info["CFBundleDisplayName"] = "TangiExtract"
-info["CFBundleShortVersionString"] = "1.1.0"
-info["CFBundleVersion"] = os.environ.get("GITHUB_RUN_NUMBER", "1")
+          info["CFBundleShortVersionString"] = "1.1.0"
+          info["CFBundleVersion"] = os.environ.get("GITHUB_RUN_NUMBER", "1")
           info["CFBundleName"] = "TangiExtract"
           info["UIFileSharingEnabled"] = True
           info["LSSupportsOpeningDocumentsInPlace"] = True
