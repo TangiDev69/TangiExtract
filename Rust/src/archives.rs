@@ -435,10 +435,7 @@ pub fn extract_extended(input: &Path, output: &Path) -> Result<(), String> {
                 }
             },
         };
-        if copied == 0 {
-            let _ = fs::remove_file(&destination);
-            return None;
-        }
+        let _ = copied;
         extracted += 1;
         None
     });
