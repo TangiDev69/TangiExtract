@@ -24,6 +24,7 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.tangidev.tangiextract
         PRODUCT_NAME: TangiExtract
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         INFOPLIST_KEY_CFBundleDisplayName: TangiExtract
         GENERATE_INFOPLIST_FILE: NO
         LIBRARY_SEARCH_PATHS:
