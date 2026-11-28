@@ -341,6 +341,30 @@ pub unsafe extern "C" fn tangiextract_stream_extract(input: *const c_char, outpu
 
 
 
+/// Convert an Inno destination template into a relative extraction path.
+/// Inno destinations commonly begin with a root constant such as {app};
+/// preserve that root as a named directory instead of writing outside output.
+fn inno_destination_relative(raw: &str) -> Result<std::path::PathBuf, String> {
+    let normalized = raw.replace('\\', "/");
+    if normalized.starts_with('/')
+        || normalized.as_bytes().get(1) == Some(&b':')
+    {
+        return Err(format!("Unsafe Inno Setup absolute destination rejected: {raw}"));
+    }
+    let mapped = normalized
+        .split('/')
+        .map(|component| {
+            if component.starts_with('{') && component.ends_with('}') && component.len() > 2 {
+                &component[1..component.len() - 1]
+            } else {
+                component
+            }
+        })
+        .collect::<Vec<_>>()
+        .join("/");
+    safe_relative(&mapped, "Inno Setup")
+}
+
 /// Extract an Inno Setup installer using its real file-entry table.
 pub fn extract_inno(
     input: &Path,
@@ -348,7 +372,7 @@ pub fn extract_inno(
     progress: Option<extern "C" fn(u64, u64, *mut std::ffi::c_void)>,
     context: *mut std::ffi::c_void,
 ) -> Result<(), String> {
-    use inno::{Inno, path::ByName};
+    use inno::Inno;
     let meta = fs::metadata(input).map_err(|e| format!("Cannot read Inno Setup installer: {e}"))?;
     if meta.len() == 0 || meta.len() > MAX_INPUT {
         return Err("Inno Setup installer is empty or exceeds the 2 GB input limit.".into());
@@ -370,18 +394,7 @@ pub fn extract_inno(
             completed += 1;
             continue;
         };
-        let relative = match destination.to_relative_path(ByName) {
-            Ok(path) => safe_relative(&path.to_string(), "Inno Setup")?,
-            Err(_) => {
-                completed += 1;
-                if let Some(callback) = progress {
-                    if completed % 16 == 0 || completed == total {
-                        callback(completed, total, context);
-                    }
-                }
-                continue;
-            }
-        };
+        let relative = inno_destination_relative(destination)?;
         let target = output.join(&relative);
         if let Some(parent) = target.parent() {
             fs::create_dir_all(parent)
