@@ -55,6 +55,8 @@ private struct HomeView: View {
     let onExtractionCompleted: () -> Void
     @State private var showingFilePicker = false
     @State private var isExtracting = false
+    @State private var extractionProgress: Double? = nil
+    @State private var extractionProgressDetail = "Preparing your files…"
     @State private var showError = false
     @State private var errorMessage = ""
     @State private var recentFolder: URL?
@@ -173,6 +175,32 @@ private struct HomeView: View {
             }
             .disabled(isExtracting)
             .buttonStyle(.plain)
+
+            if isExtracting {
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Text(extractionProgressDetail)
+                            .font(.system(size: 11, weight: .semibold, design: .rounded))
+                            .foregroundStyle(TangiPalette.deepLavender)
+                        Spacer()
+                        Text(extractionProgress.map { "\(Int($0 * 100))%" } ?? "…")
+                            .font(.system(size: 12, weight: .bold, design: .rounded).monospacedDigit())
+                            .foregroundStyle(TangiPalette.deepLavender)
+                    }
+                    if let extractionProgress {
+                        ProgressView(value: extractionProgress)
+                            .tint(TangiPalette.lavender)
+                    } else {
+                        ProgressView()
+                            .tint(TangiPalette.lavender)
+                    }
+                    Text("Almost there… your files are finding their way home ♡")
+                        .font(.system(size: 10, weight: .medium, design: .rounded))
+                        .foregroundStyle(.secondary)
+                }
+                .padding(12)
+                .background(TangiPalette.lavender.opacity(0.09), in: RoundedRectangle(cornerRadius: 14))
+            }
 
             HStack(spacing: 6) {
                 Image(systemName: "checkmark.shield.fill")
@@ -351,10 +379,17 @@ private struct HomeView: View {
         case .success(let urls):
             guard let url = urls.first else { return }
             isExtracting = true
+            extractionProgress = nil
+            extractionProgressDetail = "Reading installer…"
             Task {
                 do {
                     let destination = try await Task.detached(priority: .userInitiated) {
-                        try ExtractionService.extractFile(at: url)
+                        try ExtractionService.extractFile(at: url) { fraction, detail in
+                            Task { @MainActor in
+                                extractionProgress = fraction
+                                extractionProgressDetail = detail
+                            }
+                        }
                     }.value
                     recentFolder = destination
                     recentFileName = url.lastPathComponent
@@ -367,6 +402,7 @@ private struct HomeView: View {
                     showError = true
                 }
                 isExtracting = false
+                extractionProgress = nil
             }
         }
     }

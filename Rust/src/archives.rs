@@ -340,6 +340,113 @@ pub unsafe extern "C" fn tangiextract_stream_extract(input: *const c_char, outpu
 }
 
 
+
+/// Extract an Inno Setup installer using its real file-entry table.
+pub fn extract_inno(
+    input: &Path,
+    output: &Path,
+    progress: Option<extern "C" fn(u64, u64, *mut std::ffi::c_void)>,
+    context: *mut std::ffi::c_void,
+) -> Result<(), String> {
+    use inno::{Inno, path::ByName};
+    let meta = fs::metadata(input).map_err(|e| format!("Cannot read Inno Setup installer: {e}"))?;
+    if meta.len() == 0 || meta.len() > MAX_INPUT {
+        return Err("Inno Setup installer is empty or exceeds the 2 GB input limit.".into());
+    }
+    let mut installer = Inno::open(input)
+        .map_err(|e| format!("Not a supported Inno Setup installer, or its header is unsupported: {e}"))?;
+    let mut files = installer.streaming_files(|_| true);
+    let total = files.len() as u64;
+    if total == 0 {
+        return Err("The Inno Setup header contains no extractable file entries.".into());
+    }
+    fs::create_dir_all(output).map_err(|e| format!("Cannot create output folder: {e}"))?;
+    let mut completed = 0u64;
+    let mut total_written = 0u64;
+    while let Some(item) = files.next() {
+        let (entry, mut reader) = item
+            .map_err(|e| format!("Cannot read Inno Setup file entry: {e}"))?;
+        let Some(destination) = entry.file().destination() else {
+            completed += 1;
+            continue;
+        };
+        let relative = match destination.to_relative_path(ByName) {
+            Ok(path) => safe_relative(&path.to_string(), "Inno Setup")?,
+            Err(_) => {
+                completed += 1;
+                if let Some(callback) = progress {
+                    if completed % 16 == 0 || completed == total {
+                        callback(completed, total, context);
+                    }
+                }
+                continue;
+            }
+        };
+        let target = output.join(&relative);
+        if let Some(parent) = target.parent() {
+            fs::create_dir_all(parent)
+                .map_err(|e| format!("Cannot create Inno Setup folder {}: {e}", parent.display()))?;
+        }
+        let part = target.with_file_name(format!(
+            ".tangiextract-{}-{}.part",
+            completed,
+            target.file_name().unwrap_or_default().to_string_lossy()
+        ));
+        let mut file = File::create(&part)
+            .map_err(|e| format!("Cannot create {}: {e}", part.display()))?;
+        let copied = match io::copy(&mut reader.take(MAX_ENTRY + 1), &mut file) {
+            Ok(size) => size,
+            Err(error) => {
+                let _ = fs::remove_file(&part);
+                return Err(format!("Cannot extract {} (checksum or data error): {error}", relative.display()));
+            }
+        };
+        if copied > MAX_ENTRY || total_written > MAX_OUTPUT.saturating_sub(copied) {
+            let _ = fs::remove_file(&part);
+            return Err("Expanded Inno Setup data exceeds the configured 2 GB safety limit.".into());
+        }
+        total_written = total_written.checked_add(copied)
+            .ok_or("Inno Setup extraction size counter overflow.")?;
+        file.sync_all().map_err(|e| format!("Cannot finish {}: {e}", relative.display()))?;
+        drop(file);
+        if let Err(error) = fs::rename(&part, &target) {
+            let _ = fs::remove_file(&part);
+            return Err(format!("Cannot publish {}: {error}", relative.display()));
+        }
+        completed += 1;
+        if let Some(callback) = progress {
+            if completed % 16 == 0 || completed == total {
+                callback(completed, total, context);
+            }
+        }
+    }
+    if completed == 0 {
+        return Err("The Inno Setup installer contained no files that could be extracted.".into());
+    }
+    Ok(())
+}
+
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn tangiextract_inno_extract(
+    input: *const c_char,
+    output: *const c_char,
+    progress: Option<extern "C" fn(u64, u64, *mut std::ffi::c_void)>,
+    context: *mut std::ffi::c_void,
+    error: *mut c_char,
+    cap: usize,
+) -> i32 {
+    if input.is_null() || output.is_null() {
+        write_error(error, cap, "Invalid input or output path.");
+        return 1;
+    }
+    let input = unsafe { CStr::from_ptr(input) }.to_string_lossy();
+    let output = unsafe { CStr::from_ptr(output) }.to_string_lossy();
+    match extract_inno(Path::new(input.as_ref()), Path::new(output.as_ref()), progress, context) {
+        Ok(()) => 0,
+        Err(message) => { write_error(error, cap, &message); 1 }
+    }
+}
+
 /// Extended format engine for archive, disk-image, document and installer
 /// containers not handled by the dedicated, already-tested extraction paths.
 pub fn extract_extended(input: &Path, output: &Path) -> Result<(), String> {
