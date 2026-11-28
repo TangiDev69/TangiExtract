@@ -375,7 +375,7 @@ fn extract_inno_opened(
     context: *mut std::ffi::c_void,
 ) -> Result<(), String> {
     let mut files = installer.streaming_files(|entry| {
-        entry.file().destination().is_some()
+        entry.file().destination().is_some_and(|destination| inno_destination_relative(destination).is_ok())
     });
     let total = files.len() as u64;
     if total == 0 {
@@ -464,7 +464,7 @@ pub unsafe extern "C" fn tangiextract_inno_extract(
     let path = Path::new(input.as_ref());
     let meta = match fs::metadata(path) {
         Ok(meta) => meta,
-        Err(error) => { write_error(error.as_mut_ptr(), 0, ""); return 2; }
+        Err(error) => { write_error(error, cap, "Cannot read the selected EXE file."); return 2; }
     };
     if meta.len() == 0 || meta.len() > MAX_INPUT {
         write_error(error, cap, "Inno Setup installer is empty or exceeds the 2 GB input limit.");
