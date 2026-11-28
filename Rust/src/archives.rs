@@ -464,16 +464,17 @@ pub unsafe extern "C" fn tangiextract_inno_extract(
     let path = Path::new(input.as_ref());
     let meta = match fs::metadata(path) {
         Ok(meta) => meta,
-        Err(error) => { write_error(error, cap, "Cannot read the selected EXE file."); return 2; }
+        Err(_cause) => { write_error(error, cap, "Cannot read the selected EXE file."); return 2; }
     };
-    if meta.len() == 0 || meta.len() > MAX_INPUT {
-        write_error(error, cap, "Inno Setup installer is empty or exceeds the 2 GB input limit.");
-        return 2;
-    }
+    if meta.len() == 0 { return 2; }
     let mut installer = match inno::Inno::open(path) {
         Ok(installer) => installer,
         Err(_) => return 2,
     };
+    if meta.len() > MAX_INPUT {
+        write_error(error, cap, "Inno Setup installer exceeds the 2 GB input limit.");
+        return 1;
+    }
     match extract_inno_opened(&mut installer, Path::new(output.as_ref()), progress, context) {
         Ok(()) => 0,
         Err(message) => { write_error(error, cap, &message); 1 }
@@ -606,5 +607,24 @@ pub unsafe extern "C" fn tangiextract_extended_extract(
     match extract_extended(Path::new(input.as_ref()), Path::new(output.as_ref())) {
         Ok(()) => 0,
         Err(message) => { write_error(error, cap, &message); 1 }
+    }
+}
+
+#[cfg(test)]
+mod inno_path_tests {
+    use super::inno_destination_relative;
+    use std::path::Path;
+
+    #[test]
+    fn maps_windows_inno_roots_into_safe_folders() {
+        assert_eq!(inno_destination_relative(r"{app}\\Data Files\\Morrowind.esm").unwrap(), Path::new("app/Data Files/Morrowind.esm"));
+        assert_eq!(inno_destination_relative(r"{commonpf}\\Game\\game.exe").unwrap(), Path::new("commonpf/Game/game.exe"));
+    }
+
+    #[test]
+    fn rejects_unsafe_or_empty_destinations() {
+        assert!(inno_destination_relative(r"C:\\Windows\\system32\\x.dll").is_err());
+        assert!(inno_destination_relative(r"{app}\\..\\outside.dll").is_err());
+        assert!(inno_destination_relative("").is_err());
     }
 }
