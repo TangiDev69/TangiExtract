@@ -109,7 +109,7 @@ pub unsafe extern "C" fn tangiextract_tar_extract(input: *const c_char, output: 
 }
 
 fn safe_relative(raw: &str, label: &str) -> Result<std::path::PathBuf, String> {
-    let normalized = raw.replace('\\', "/");
+    let normalized = raw.replace('\', "/");
     let path = Path::new(&normalized);
     if path.as_os_str().is_empty() || path.is_absolute()
         || path.components().any(|c| !matches!(c, Component::Normal(_))) {
@@ -345,7 +345,7 @@ pub unsafe extern "C" fn tangiextract_stream_extract(input: *const c_char, outpu
 /// Inno destinations commonly begin with a root constant such as {app};
 /// preserve that root as a named directory instead of writing outside output.
 fn inno_destination_relative(raw: &str) -> Result<std::path::PathBuf, String> {
-    let normalized = raw.replace('\\', "/");
+    let normalized = raw.replace('\', "/");
     if normalized.starts_with('/')
         || normalized.as_bytes().get(1) == Some(&b':')
     {
@@ -365,21 +365,18 @@ fn inno_destination_relative(raw: &str) -> Result<std::path::PathBuf, String> {
     safe_relative(&mapped, "Inno Setup")
 }
 
-/// Extract an Inno Setup installer using its real file-entry table.
-pub fn extract_inno(
-    input: &Path,
+/// Extract an already-recognised Inno Setup installer using its real file-entry table.
+/// Errors from this point mean the input IS Inno; callers must not fall back to
+/// generic stream extraction because that would append thousands of unnamed streams.
+fn extract_inno_opened(
+    installer: &mut inno::Inno<io::BufReader<File>>,
     output: &Path,
     progress: Option<extern "C" fn(u64, u64, *mut std::ffi::c_void)>,
     context: *mut std::ffi::c_void,
 ) -> Result<(), String> {
-    use inno::Inno;
-    let meta = fs::metadata(input).map_err(|e| format!("Cannot read Inno Setup installer: {e}"))?;
-    if meta.len() == 0 || meta.len() > MAX_INPUT {
-        return Err("Inno Setup installer is empty or exceeds the 2 GB input limit.".into());
-    }
-    let mut installer = Inno::open(input)
-        .map_err(|e| format!("Not a supported Inno Setup installer, or its header is unsupported: {e}"))?;
-    let mut files = installer.streaming_files(|_| true);
+    let mut files = installer.streaming_files(|entry| {
+        entry.file().destination().is_some_and(|destination| inno_destination_relative(destination).is_ok())
+    });
     let total = files.len() as u64;
     if total == 0 {
         return Err("The Inno Setup header contains no extractable file entries.".into());
@@ -391,7 +388,6 @@ pub fn extract_inno(
         let (entry, mut reader) = item
             .map_err(|e| format!("Cannot read Inno Setup file entry: {e}"))?;
         let Some(destination) = entry.file().destination() else {
-            completed += 1;
             continue;
         };
         let relative = inno_destination_relative(destination)?;
@@ -405,9 +401,13 @@ pub fn extract_inno(
             completed,
             target.file_name().unwrap_or_default().to_string_lossy()
         ));
-        let mut file = File::create(&part)
+        let file = File::create(&part)
             .map_err(|e| format!("Cannot create {}: {e}", part.display()))?;
-        let copied = match io::copy(&mut reader.take(MAX_ENTRY + 1), &mut file) {
+        // Buffer writes to avoid thousands of tiny filesystem operations. A
+        // per-file fsync is deliberately avoided: it is extremely expensive on
+        // mobile flash storage and is not needed before publishing this temp file.
+        let mut writer = io::BufWriter::with_capacity(256 * 1024, file);
+        let copied = match io::copy(&mut reader.take(MAX_ENTRY + 1), &mut writer) {
             Ok(size) => size,
             Err(error) => {
                 let _ = fs::remove_file(&part);
@@ -418,17 +418,19 @@ pub fn extract_inno(
             let _ = fs::remove_file(&part);
             return Err("Expanded Inno Setup data exceeds the configured 2 GB safety limit.".into());
         }
+        io::Write::flush(&mut writer).map_err(|e| format!("Cannot finish {}: {e}", relative.display()))?;
+        let file = writer.into_inner().map_err(|e| format!("Cannot finish {}: {}", relative.display(), e.into_error()))?;
+        drop(file);
         total_written = total_written.checked_add(copied)
             .ok_or("Inno Setup extraction size counter overflow.")?;
-        file.sync_all().map_err(|e| format!("Cannot finish {}: {e}", relative.display()))?;
-        drop(file);
         if let Err(error) = fs::rename(&part, &target) {
             let _ = fs::remove_file(&part);
             return Err(format!("Cannot publish {}: {error}", relative.display()));
         }
         completed += 1;
         if let Some(callback) = progress {
-            if completed % 16 == 0 || completed == total {
+            // Reduce cross-language/UI callback traffic for large installers.
+            if completed % 128 == 0 || completed == total {
                 callback(completed, total, context);
             }
         }
@@ -439,6 +441,8 @@ pub fn extract_inno(
     Ok(())
 }
 
+/// C status contract: 0 = extracted, 1 = recognised Inno extraction failed,
+/// 2 = not Inno (safe to try NSIS or another EXE handler).
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn tangiextract_inno_extract(
     input: *const c_char,
@@ -450,11 +454,25 @@ pub unsafe extern "C" fn tangiextract_inno_extract(
 ) -> i32 {
     if input.is_null() || output.is_null() {
         write_error(error, cap, "Invalid input or output path.");
-        return 1;
+        return 2;
     }
     let input = unsafe { CStr::from_ptr(input) }.to_string_lossy();
     let output = unsafe { CStr::from_ptr(output) }.to_string_lossy();
-    match extract_inno(Path::new(input.as_ref()), Path::new(output.as_ref()), progress, context) {
+    let path = Path::new(input.as_ref());
+    let meta = match fs::metadata(path) {
+        Ok(meta) => meta,
+        Err(_cause) => { write_error(error, cap, "Cannot read the selected EXE file."); return 2; }
+    };
+    if meta.len() == 0 { return 2; }
+    let mut installer = match inno::Inno::open(path) {
+        Ok(installer) => installer,
+        Err(_) => return 2,
+    };
+    if meta.len() > MAX_INPUT {
+        write_error(error, cap, "Inno Setup installer exceeds the 2 GB input limit.");
+        return 1;
+    }
+    match extract_inno_opened(&mut installer, Path::new(output.as_ref()), progress, context) {
         Ok(()) => 0,
         Err(message) => { write_error(error, cap, &message); 1 }
     }
@@ -586,5 +604,24 @@ pub unsafe extern "C" fn tangiextract_extended_extract(
     match extract_extended(Path::new(input.as_ref()), Path::new(output.as_ref())) {
         Ok(()) => 0,
         Err(message) => { write_error(error, cap, &message); 1 }
+    }
+}
+
+#[cfg(test)]
+mod inno_path_tests {
+    use super::inno_destination_relative;
+    use std::path::Path;
+
+    #[test]
+    fn maps_windows_inno_roots_into_safe_folders() {
+        assert_eq!(inno_destination_relative(r"{app}\Data Files\Morrowind.esm").unwrap(), Path::new("app/Data Files/Morrowind.esm"));
+        assert_eq!(inno_destination_relative(r"{commonpf}\Game\game.exe").unwrap(), Path::new("commonpf/Game/game.exe"));
+    }
+
+    #[test]
+    fn rejects_unsafe_or_empty_destinations() {
+        assert!(inno_destination_relative(r"C:\Windows\system32\x.dll").is_err());
+        assert!(inno_destination_relative(r"{app}\..\outside.dll").is_err());
+        assert!(inno_destination_relative("").is_err());
     }
 }
