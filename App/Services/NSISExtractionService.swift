@@ -34,6 +34,31 @@ private func tangiextract_nsis_extract(
     _ errorCapacity: Int
 ) -> Int32
 
+
+typealias TangiInnoProgressCallback = @convention(c) (UInt64, UInt64, UnsafeMutableRawPointer?) -> Void
+
+private final class InnoProgressContext {
+    let update: (Double, String) -> Void
+    init(update: @escaping (Double, String) -> Void) { self.update = update }
+}
+
+private let tangiInnoProgressCallback: TangiInnoProgressCallback = { current, total, context in
+    guard total > 0, let context else { return }
+    let reporter = Unmanaged<InnoProgressContext>.fromOpaque(context).takeUnretainedValue()
+    reporter.update(min(1.0, Double(current) / Double(total)),
+                    "\(current.formatted()) of \(total.formatted()) files")
+}
+
+@_silgen_name("tangiextract_inno_extract")
+private func tangiextract_inno_extract(
+    _ inputPath: UnsafePointer<CChar>,
+    _ outputPath: UnsafePointer<CChar>,
+    _ progress: TangiInnoProgressCallback?,
+    _ context: UnsafeMutableRawPointer?,
+    _ errorBuffer: UnsafeMutablePointer<CChar>,
+    _ errorCapacity: Int
+) -> Int32
+
 enum ExtractionServiceError: LocalizedError {
     case unsupportedFormat
     case cannotCreateStorage
@@ -54,7 +79,7 @@ enum ExtractionServiceError: LocalizedError {
 enum ExtractionService {
     /// Extracts directly from the selected file URL. The source file is never
     /// copied into the app's storage; only extracted output is retained.
-    static func extractFile(at sourceURL: URL) throws -> URL {
+    static func extractFile(at sourceURL: URL, progress: @escaping (Double, String) -> Void = { _, _ in }) throws -> URL {
         // Keep the security-scoped permission active while coordinating and staging
         // provider-backed files (iCloud Drive, external providers, etc.).
         let hasSecurityScope = sourceURL.startAccessingSecurityScopedResource()
@@ -95,10 +120,10 @@ enum ExtractionService {
             throw ExtractionServiceError.extractionFailed("The selected file was not made available by its Files provider.")
         }
         defer { try? fileManager.removeItem(at: stagedURL) }
-        return try extractLocalFile(at: stagedURL, displayName: sourceURL.lastPathComponent)
+        return try extractLocalFile(at: stagedURL, displayName: sourceURL.lastPathComponent, progress: progress)
     }
 
-    private static func extractLocalFile(at sourceURL: URL, displayName: String) throws -> URL {
+    private static func extractLocalFile(at sourceURL: URL, displayName: String, progress: @escaping (Double, String) -> Void) throws -> URL {
         let fileExtension = URL(fileURLWithPath: displayName).pathExtension.lowercased()
         let lowerName = displayName.lowercased()
         let tarCompression: Int32 = lowerName.hasSuffix(".tar.gz") || fileExtension == "tgz" ? 1 :
@@ -155,6 +180,16 @@ enum ExtractionService {
                         } else if isTar || isTarCompressed {
                             return tangiextract_tar_extract(inputPath, outputPath, tarCompression, buffer.baseAddress!, buffer.count)
                         } else if fileExtension == "exe" {
+                            let reporter = InnoProgressContext { fraction, detail in
+                                DispatchQueue.main.async { progress(fraction, detail) }
+                            }
+                            let context = Unmanaged.passUnretained(reporter).toOpaque()
+                            let innoStatus = tangiextract_inno_extract(
+                                inputPath, outputPath, tangiInnoProgressCallback, context,
+                                buffer.baseAddress!, buffer.count
+                            )
+                            if innoStatus == 0 { return 0 }
+                            // Preserve the existing NSIS route for non-Inno EXEs.
                             let nsisStatus = tangiextract_nsis_extract(inputPath, outputPath, buffer.baseAddress!, buffer.count)
                             if nsisStatus == 0 { return 0 }
                             return tangiextract_extended_extract(inputPath, outputPath, buffer.baseAddress!, buffer.count)
