@@ -1,6 +1,6 @@
 use std::{collections::HashSet, ffi::{CStr,c_char}, fs::{self,File}, io, path::{Component,Path}, ptr};
 use zip::ZipArchive;
-const MAX_INPUT:u64=1024*1024*1024;
+const MAX_INPUT:u64=2*1024*1024*1024;
 const MAX_OUTPUT:u64=2*1024*1024*1024;
 const MAX_ENTRY:u64=512*1024*1024;
 const MAX_FILES:usize=100_000;
@@ -355,7 +355,7 @@ pub fn extract_extended(input: &Path, output: &Path) -> Result<(), String> {
     let format = detect(&source).ok_or_else(|| "This file type is not recognised by the extended extraction engine.".to_string())?;
 
     let mut limits = Limits::default();
-    limits.max_extracted_bytes = 512 * 1024 * 1024;
+    limits.max_extracted_bytes = 2 * 1024 * 1024 * 1024;
     limits.max_buffer_bytes = 128 * 1024 * 1024;
     limits.max_members = 50_000;
     limits.max_recursion = 8;
