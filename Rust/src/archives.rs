@@ -418,7 +418,7 @@ fn extract_inno_opened(
             let _ = fs::remove_file(&part);
             return Err("Expanded Inno Setup data exceeds the configured 2 GB safety limit.".into());
         }
-        writer.flush().map_err(|e| format!("Cannot finish {}: {e}", relative.display()))?;
+        io::Write::flush(&mut writer).map_err(|e| format!("Cannot finish {}: {e}", relative.display()))?;
         let file = writer.into_inner().map_err(|e| format!("Cannot finish {}: {}", relative.display(), e.into_error()))?;
         drop(file);
         total_written = total_written.checked_add(copied)
@@ -437,9 +437,6 @@ fn extract_inno_opened(
     }
     if completed == 0 {
         return Err("The Inno Setup installer contained no files that could be extracted.".into());
-    }
-    if let Some(callback) = progress {
-        callback(completed, total, context);
     }
     Ok(())
 }
