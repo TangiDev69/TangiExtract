@@ -109,7 +109,7 @@ pub unsafe extern "C" fn tangiextract_tar_extract(input: *const c_char, output: 
 }
 
 fn safe_relative(raw: &str, label: &str) -> Result<std::path::PathBuf, String> {
-    let normalized = raw.replace('\', "/");
+    let normalized = raw.replace('\\', "/");
     let path = Path::new(&normalized);
     if path.as_os_str().is_empty() || path.is_absolute()
         || path.components().any(|c| !matches!(c, Component::Normal(_))) {
@@ -345,7 +345,7 @@ pub unsafe extern "C" fn tangiextract_stream_extract(input: *const c_char, outpu
 /// Inno destinations commonly begin with a root constant such as {app};
 /// preserve that root as a named directory instead of writing outside output.
 fn inno_destination_relative(raw: &str) -> Result<std::path::PathBuf, String> {
-    let normalized = raw.replace('\', "/");
+    let normalized = raw.replace('\\', "/");
     if normalized.starts_with('/')
         || normalized.as_bytes().get(1) == Some(&b':')
     {
