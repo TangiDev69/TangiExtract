@@ -189,9 +189,21 @@ enum ExtractionService {
                                 buffer.baseAddress!, buffer.count
                             )
                             if innoStatus == 0 { return 0 }
-                            // Preserve the existing NSIS route for non-Inno EXEs.
+                            // Status 1 means the EXE was positively identified as Inno
+                            // but extraction failed. Never append a generic stream dump
+                            // to a partially extracted, correctly named game directory.
+                            if innoStatus == 1 { return 1 }
+                            // Status 2 means it was not Inno; preserve NSIS support.
                             let nsisStatus = tangiextract_nsis_extract(inputPath, outputPath, buffer.baseAddress!, buffer.count)
                             if nsisStatus == 0 { return 0 }
+                            // NSIS may have written partial output before failing. Start
+                            // the generic fallback with a clean destination.
+                            do {
+                                try fileManager.removeItem(at: outputDirectory)
+                                try fileManager.createDirectory(at: outputDirectory, withIntermediateDirectories: true)
+                            } catch {
+                                return 1
+                            }
                             return tangiextract_extended_extract(inputPath, outputPath, buffer.baseAddress!, buffer.count)
                         } else {
                             return tangiextract_extended_extract(inputPath, outputPath, buffer.baseAddress!, buffer.count)
